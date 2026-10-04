@@ -24,6 +24,8 @@
 
 - 개발은 [docs/08-architecture.md](docs/08-architecture.md) 9절의 개발 순서를 따른다.
 - 기획 문서를 바꿔야 하면 해당 문서와 영향받는 문서를 함께 고친다.
+- 제품 요구사항 요약은 [docs/prd.md](docs/prd.md), 설계 결정의 이유는 [docs/adr/](docs/adr/README.md)에 있다.
+- 기존 결정을 바꾸거나 중요한 설계 결정을 새로 내리면 ADR을 추가한다. 기존 ADR은 지우지 않고 상태를 "대체됨"으로 바꾼다.
 
 - 기획 문서는 `docs/` 아래 Markdown으로 작성한다. 진행 상태는 [docs/00-roadmap.md](docs/00-roadmap.md)를 기준으로 한다.
 - 문서는 단계 순서대로 진행한다: 00 로드맵 → 01 개요 → 02 접근제어 → 03 ERD → 04 기능 명세 → 05 화면 명세 → 06 API 명세 → 07 비기능 → 08 아키텍처
