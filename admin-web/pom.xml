@@ -98,6 +98,14 @@
             <artifactId>postgresql</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- 계약 테스트: 실제 요청·응답을 api/openapi.yaml로 검증 (ADR-0020).
+             3.x는 Java 21 바이트코드라 Java 17(5.0.2 기준)에서 못 쓴다. 2.x를 쓴다. -->
+        <dependency>
+            <groupId>com.atlassian.oai</groupId>
+            <artifactId>swagger-request-validator-core</artifactId>
+            <version>${openapi.request.validator.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>

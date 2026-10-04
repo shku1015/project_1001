@@ -1,0 +1,333 @@
+openapi: 3.0.3
+info:
+  title: 관리자 서비스 API
+  version: 0.1.0
+  description: |
+    ① React와 ② JSP + API가 호출하는 REST API의 정본 (ADR-0020, 명세 우선).
+    규약·업무 설명은 docs/06-api-spec.md, 모듈별 설명은 docs/06-api/*.md.
+    API를 바꿀 때는 이 파일을 먼저 고친다. 서버는 계약 테스트로, React는 생성 타입으로 맞춘다.
+  license:
+    name: Apache-2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+servers:
+  - url: /api/v1
+security:
+  - bearerAuth: []
+tags:
+  - name: common
+    description: 여러 화면에서 쓰는 조회 API (docs/06-api-spec.md 9절)
+
+paths:
+  /common/codes/{groupCd}:
+    get:
+      tags: [common]
+      operationId: getCodes
+      summary: 그룹코드의 상세코드 목록 (코드 콤보용)
+      parameters:
+        - name: groupCd
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[A-Z0-9_]+$'
+          example: USER_STATUS
+        - name: includeUnused
+          in: query
+          description: Y면 사용 안 함 코드도 포함 (이미 저장된 값 표시용)
+          schema:
+            $ref: '#/components/schemas/YnFlag'
+      responses:
+        '200':
+          description: 정렬 순서대로
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CodeListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /common/codes:
+    get:
+      tags: [common]
+      operationId: getCodesByGroups
+      summary: 여러 그룹코드의 상세코드를 한 번에
+      parameters:
+        - name: groups
+          in: query
+          required: true
+          style: form
+          explode: false
+          schema:
+            type: array
+            minItems: 1
+            items:
+              type: string
+              pattern: '^[A-Z0-9_]+$'
+          example: [USER_STATUS, USER_TYPE]
+      responses:
+        '200':
+          description: 그룹코드별 상세코드 목록
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CodeMapResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Access Token (docs/04-features/09-auth.md 1.1)
+
+  parameters:
+    Page:
+      name: page
+      in: query
+      description: 페이지 번호 (1부터)
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    Size:
+      name: size
+      in: query
+      description: 페이지 크기
+      schema:
+        type: integer
+        enum: [10, 20, 50]
+        default: 20
+    Sort:
+      name: sort
+      in: query
+      description: '필드,방향. 여러 개면 반복 (예: regDt,desc)'
+      schema:
+        type: array
+        items:
+          type: string
+          pattern: '^[a-zA-Z]+,(asc|desc)$'
+      explode: true
+
+  responses:
+    BadRequest:
+      description: 입력값 오류 (VALIDATION_ERROR, INVALID_REQUEST)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: 인증 필요 (UNAUTHORIZED, TOKEN_EXPIRED 등)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Forbidden:
+      description: 권한 없음 (FORBIDDEN, PASSWORD_CHANGE_REQUIRED 등)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: 대상 없음 (NOT_FOUND)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Conflict:
+      description: 중복·동시 수정·업무 규칙 위반
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    InternalError:
+      description: 서버 오류 (INTERNAL_ERROR)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+    # ---------------------------------------------------------------
+    # 공통 응답 틀 (docs/06-api-spec.md 4절)
+    # ---------------------------------------------------------------
+    ErrorResponse:
+      type: object
+      required: [success, data, error]
+      properties:
+        success:
+          type: boolean
+          enum: [false]
+        data:
+          type: object
+          nullable: true
+          enum: [null]
+        error:
+          $ref: '#/components/schemas/ErrorBody'
+
+    ErrorBody:
+      type: object
+      required: [code, message, fieldErrors]
+      properties:
+        code:
+          $ref: '#/components/schemas/ErrorCode'
+        message:
+          type: string
+          description: 화면에 그대로 보여 줄 수 있는 문장
+        fieldErrors:
+          type: array
+          items:
+            $ref: '#/components/schemas/FieldError'
+
+    FieldError:
+      type: object
+      required: [field, message]
+      properties:
+        field:
+          type: string
+          description: 요청 필드 이름
+        message:
+          type: string
+
+    NullError:
+      type: object
+      nullable: true
+      enum: [null]
+      description: 성공 응답의 error는 항상 null
+
+    PageMeta:
+      type: object
+      required: [page, size, totalCount, totalPages]
+      properties:
+        page:
+          type: integer
+          minimum: 1
+        size:
+          type: integer
+        totalCount:
+          type: integer
+          format: int64
+          minimum: 0
+        totalPages:
+          type: integer
+          minimum: 0
+
+    YnFlag:
+      type: string
+      enum: ['Y', 'N']
+
+    # 오류 코드 목록. admin-core의 ErrorCode enum과 같아야 한다 (ErrorCodeSpecTest).
+    ErrorCode:
+      type: string
+      enum:
+        - VALIDATION_ERROR
+        - INVALID_REQUEST
+        - UNAUTHORIZED
+        - TOKEN_EXPIRED
+        - REFRESH_FAILED
+        - LOGIN_FAILED
+        - FORBIDDEN
+        - PASSWORD_CHANGE_REQUIRED
+        - ACCOUNT_LOCKED
+        - ACCOUNT_DISABLED
+        - NOT_FOUND
+        - DUPLICATE
+        - CONFLICT_MODIFIED
+        - EXCEL_LIMIT_EXCEEDED
+        - FILE_TOO_LARGE
+        - INTERNAL_ERROR
+        - INVALID_STATUS_CHANGE
+        - REASON_REQUIRED
+        - COMPANY_HAS_MEMBERS
+        - COMPANY_NOT_ACTIVE
+        - COMPANY_REQUIRED
+        - USER_WITHDRAWN
+        - MENU_DEPTH_EXCEEDED
+        - MENU_PARENT_NOT_FOLDER
+        - MENU_HAS_CHILDREN
+        - MENU_SYSTEM_PROTECTED
+        - MENU_BOARD_MANAGED
+        - MENU_ORDER_MISMATCH
+        - MENU_NOT_PAGE
+        - CODE_SYSTEM_PROTECTED
+        - CODE_GROUP_HAS_CODES
+        - BOARD_MENU_EXISTS
+        - BOARD_MENU_NOT_FOUND
+        - REPLY_NOT_ALLOWED
+        - COMMENT_NOT_ALLOWED
+        - COMMENT_DEPTH_EXCEEDED
+        - ATTACH_NOT_ALLOWED
+        - ATTACH_COUNT_EXCEEDED
+        - FILE_TYPE_NOT_ALLOWED
+        - ROLE_REQUIRED
+        - SELF_ROLE_CHANGE
+        - SELF_DISABLE
+        - PRIVILEGE_ESCALATION
+        - LAST_SUPER_ADMIN
+        - ROLE_NOT_USABLE
+        - ROLE_NOT_EDITABLE
+        - ROLE_IN_USE
+        - ROLE_SYSTEM_PROTECTED
+
+    # ---------------------------------------------------------------
+    # 공통 코드
+    # ---------------------------------------------------------------
+    CodeItem:
+      type: object
+      required: [code, codeNm, sortOrd, useYn]
+      properties:
+        code:
+          type: string
+          example: SUSPENDED
+        codeNm:
+          type: string
+          example: 정지
+        sortOrd:
+          type: integer
+          minimum: 0
+        useYn:
+          $ref: '#/components/schemas/YnFlag'
+
+    # 성공 응답은 { success: true, data, error: null } 틀을 응답마다 펼쳐서 쓴다.
+    # (allOf로 조합하면 계약 테스트의 "정의되지 않은 필드" 검사와 맞지 않는다)
+    CodeListResponse:
+      type: object
+      required: [success, data, error]
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/CodeItem'
+        error:
+          $ref: '#/components/schemas/NullError'
+
+    CodeMapResponse:
+      type: object
+      required: [success, data, error]
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        data:
+          type: object
+          description: 그룹코드 → 상세코드 목록
+          additionalProperties:
+            type: array
+            items:
+              $ref: '#/components/schemas/CodeItem'
+        error:
+          $ref: '#/components/schemas/NullError'

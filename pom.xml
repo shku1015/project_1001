@@ -28,6 +28,7 @@
         <java.version>17</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <mybatis.spring.boot.version>3.0.5</mybatis.spring.boot.version>
+        <openapi.request.validator.version>2.46.1</openapi.request.validator.version>
     </properties>
 
     <repositories>
@@ -78,10 +79,26 @@
                                 <requireMavenVersion>
                                     <version>[3.9,)</version>
                                 </requireMavenVersion>
+                                <!-- 로컬 JDK가 17보다 높아도 Java 17(5.0.2 기준)에서 못 읽는 의존성을 잡는다 -->
+                                <enforceBytecodeVersion>
+                                    <maxJdkVersion>${java.version}</maxJdkVersion>
+                                    <ignoredScopes/>
+                                    <excludes>
+                                        <!-- 다중 릴리스 JAR(META-INF/versions)라 Java 17에서도 동작한다 -->
+                                        <exclude>org.apache.logging.log4j:log4j-api</exclude>
+                                    </excludes>
+                                </enforceBytecodeVersion>
                             </rules>
                         </configuration>
                     </execution>
                 </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>extra-enforcer-rules</artifactId>
+                        <version>1.12.1</version>
+                    </dependency>
+                </dependencies>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

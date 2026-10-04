@@ -278,7 +278,7 @@ erDiagram
 | `PRIVACY_FIELD` | 개인정보 항목 | `USER_NM` 이름, `EMAIL` 이메일, `MOBILE_NO` 휴대폰 번호, `BIRTH_DATE` 생년월일 |
 | `PRIVACY_REASON` | 개인정보 열람 사유 (일반 코드, 관리자가 추가 가능) | `CS_INQUIRY` 고객 문의 응대, `IDENTITY_CHECK` 본인 확인, `DATA_CORRECTION` 정보 정정, `ETC` 기타 (직접 입력) |
 | `AUTH_TYPE` | 인증 방식 | `SESSION` 세션, `TOKEN` 토큰 |
-| `LOGIN_RESULT` | 로그인 결과 | `SUCCESS` 성공, `FAIL_PWD` 비밀번호 오류, `FAIL_LOCKED` 잠김 계정, `FAIL_NO_ID` 없는 아이디 |
+| `LOGIN_RESULT` | 로그인 결과 | `SUCCESS` 성공, `FAIL_PWD` 비밀번호 오류, `FAIL_LOCKED` 잠김 계정, `FAIL_DISABLED` 사용중지 계정, `FAIL_NO_ID` 없는 아이디 |
 
 ### TB_MASKING_POLICY (개인정보 마스킹 설정)
 

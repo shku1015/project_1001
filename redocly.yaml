@@ -1,0 +1,14 @@
+# api/openapi.yaml 검사 규칙 (ADR-0020). 실행: npx @redocly/cli lint
+apis:
+  admin:
+    root: api/openapi.yaml
+
+extends:
+  - recommended
+
+rules:
+  # 페이징 파라미터, 공통 응답처럼 아직 쓰지 않는 공통 부품을 미리 정의해 둔다.
+  no-unused-components: off
+  operation-4xx-response: error
+  operation-operationId: error
+  info-license: warn
