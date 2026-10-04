@@ -23,5 +23,5 @@
 
 ## 결과
 
-- 좋은 점: 빌드·테스트가 재현 가능하다. 함께 쓰는 라이브러리(Spring Session, springdoc, Flyway, Testcontainers) 버전을 이 기준으로 맞춘다.
+- 좋은 점: 빌드·테스트가 재현 가능하다. 함께 쓰는 라이브러리(Spring Session, Flyway, Testcontainers 등) 버전을 이 기준으로 맞춘다.
 - 감수할 점: Jakarta EE 기반이라 JSP·JSTL 의존성도 Jakarta 버전을 써야 한다. 오래된 `javax.*` 예제 코드는 그대로 쓸 수 없다. 버전을 올리려면 새 ADR이 필요하다.

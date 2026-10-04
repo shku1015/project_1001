@@ -3,6 +3,8 @@
 ① React와 ② JSP + API가 호출하는 REST API의 공통 규약을 정의한다.
 모듈별 API 목록과 요청·응답 항목은 [06-api/](06-api/) 아래 문서에 있다.
 
+> **명세 우선 방식** ([ADR-0020](adr/0020-openapi-spec-first.md)): 개발 단계에서는 `api/openapi.yaml`이 API 요청·응답 형식의 **정본**이다. 이 Markdown 문서들은 규약, 업무 설명, 화면·권한 매핑을 담당한다. API를 바꿀 때는 `openapi.yaml`을 먼저 고치고, 규약·매핑이 바뀌면 이 문서도 함께 고친다. 모듈별 문서의 요청·응답 예시는 설계 당시의 기준이며, 필드가 다르면 `openapi.yaml`을 따른다.
+
 > ③ JSP SSR은 이 API를 쓰지 않는다. 컨트롤러가 Service를 직접 호출한다 ([00-roadmap.md](00-roadmap.md) 2절).
 > 다만 ③의 컨트롤러도 같은 Service와 같은 검증·오류 코드를 쓰므로, 4~6절의 오류 코드는 ③에서도 화면 메시지로 그대로 쓴다.
 
@@ -185,4 +187,4 @@
 
 ## 11. 미결 사항
 
-없음. (Swagger는 개발 단계에서 springdoc-openapi로 코드에서 생성하고, 이 문서는 설계 기준으로 유지한다. [08-architecture.md](08-architecture.md) 2.1)
+없음. (API 명세는 `api/openapi.yaml`을 먼저 쓰는 명세 우선 방식이다. [ADR-0020](adr/0020-openapi-spec-first.md))
