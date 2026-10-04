@@ -1,0 +1,27 @@
+# 비밀값 (공개 저장소: 절대 커밋 금지)
+.env
+.env.*
+!.env.example
+
+# Maven
+target/
+.mvn/wrapper/maven-wrapper.jar
+
+# Node / React
+node_modules/
+admin-react/dist/
+admin-react/coverage/
+
+# 첨부파일 로컬 저장소
+data/
+
+# IDE / OS
+.idea/
+*.iml
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+
+# 로그
+logs/
+*.log

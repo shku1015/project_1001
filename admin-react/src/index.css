@@ -1,0 +1,5 @@
+/* UI는 Bootstrap 5 + Tabler로 맞춘다 (ADR-0013). 공통 레이아웃 단계에서 교체한다. */
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+}

@@ -1,0 +1,45 @@
+# CI (ADR-0018). PR과 main push마다 실행한다.
+# api-spec(openapi.yaml 검사)과 e2e 작업은 해당 파일·화면이 생기는 단계에서 추가한다 (docs/08-architecture.md 8.2).
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+      - name: 빌드·테스트 (Testcontainers)
+        run: ./verify.sh backend
+      - name: 실패 시 테스트 보고서 보관
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-reports
+          path: '**/target/surefire-reports'
+
+  frontend:
+    name: frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: admin-react/package-lock.json
+      - name: lint · 타입 검사 · 테스트 · 빌드
+        run: ./verify.sh frontend
