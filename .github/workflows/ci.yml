@@ -1,5 +1,5 @@
 # CI (ADR-0018). PR과 main push마다 실행한다.
-# api-spec(openapi.yaml 검사)과 e2e 작업은 해당 파일·화면이 생기는 단계에서 추가한다 (docs/08-architecture.md 8.2).
+# e2e 작업은 화면이 생기는 단계에서 추가한다 (docs/08-architecture.md 8.2).
 name: CI
 
 on:
@@ -12,6 +12,17 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  api-spec:
+    name: api-spec
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - name: openapi.yaml lint · React 생성 타입 최신 여부
+        run: ./verify.sh api
+
   backend:
     name: backend
     runs-on: ubuntu-latest

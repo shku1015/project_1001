@@ -98,6 +98,13 @@
             <artifactId>postgresql</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- 계약 테스트: 실제 요청·응답을 api/openapi.yaml로 검증 (ADR-0020) -->
+        <dependency>
+            <groupId>com.atlassian.oai</groupId>
+            <artifactId>openapi-request-validator-core</artifactId>
+            <version>${openapi.request.validator.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.admin.code.CodeMapper">
+
+    <select id="existsGroup" resultType="boolean">
+        SELECT EXISTS (SELECT 1 FROM tb_code_group WHERE group_cd = #{groupCd})
+    </select>
+
+    <select id="selectCodes" resultType="egovframework.admin.code.CodeItem">
+        SELECT code, code_nm, sort_ord, use_yn
+        FROM tb_code
+        WHERE group_cd = #{groupCd}
+        <if test="!includeUnused">
+            AND use_yn = 'Y'
+        </if>
+        ORDER BY sort_ord, code
+    </select>
+</mapper>

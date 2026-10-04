@@ -1,0 +1,5 @@
+# 로컬 개발: 테스트 데이터(docs/03-initial-data.md 3절)를 함께 넣는다.
+# 실행: SPRING_PROFILES_ACTIVE=local ./mvnw -pl admin-web -am spring-boot:run
+spring:
+  flyway:
+    locations: classpath:db/migration,classpath:db/testdata

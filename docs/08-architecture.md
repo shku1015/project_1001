@@ -73,7 +73,7 @@ flowchart LR
 | 빌드 | Maven 멀티 모듈 | 전자정부프레임워크 기본 빌드 도구 |
 | DB 접근 | MyBatis | 전자정부프레임워크 표준 |
 | DB | PostgreSQL | |
-| DB 변경 관리 | Flyway | 테이블 생성·초기 데이터를 버전별 SQL 파일로 관리 |
+| DB 변경 관리 | Flyway | `db/migration`: V1 확장, V2 테이블, V3 운영 필수 데이터 / `db/testdata`: 개발용 테스트 데이터(`R__`, `local` 프로필만) |
 | 보안 | Spring Security | 경로별 필터 체인 2개 (토큰 / 세션) |
 | JWT | jjwt | Access Token 생성·검증 |
 | 세션 저장 | Spring Session JDBC | 세션을 DB에 저장해 관리자별로 찾아 끊을 수 있게 함 (동시 로그인 금지, 사용중지 시 강제 로그아웃) |
@@ -83,7 +83,7 @@ flowchart LR
 | HTML 정제 | jsoup Safelist | 게시글 본문의 허용 태그만 남김 (NF-WS-06) |
 | API 명세 | `api/openapi.yaml` (명세 우선) | API 형식의 정본. 개발 환경 Swagger UI는 이 파일을 그대로 보여 줌 ([ADR-0020](adr/0020-openapi-spec-first.md)) |
 | 명세 검사 | Redocly CLI (lint) | `openapi.yaml` 문법·규칙 검사 |
-| 계약 테스트 | OpenAPI 요청·응답 검증 라이브러리 (예: swagger-request-validator) | 통합 테스트에서 실제 요청·응답을 `openapi.yaml`과 대조 |
+| 계약 테스트 | `openapi-request-validator-core` 3.0.0 + 직접 만든 MockMvc 연결(`OpenApiContract`) | 통합 테스트에서 실제 요청·응답을 `openapi.yaml`과 대조. 공식 MockMvc 연동 모듈은 `javax.servlet` 기준이라 쓰지 않는다. 명세에 없는 응답 필드도 오류로 잡으므로 응답 스키마는 `allOf` 없이 펼쳐 쓴다 |
 | 배치 | Spring `@Scheduled` | 서버 1대 기준. 여러 대로 늘리면 중복 실행 방지가 필요 |
 | 로그 | Log4j2 (`spring-boot-starter-log4j2`) | 일별 파일, 30일 보관 (07 비기능 5절). 전자정부 실행환경(`ptl-mvc`)이 Log4j2를 쓰므로 Spring Boot 기본 Logback 대신 Log4j2로 통일 |
 | 테스트 | JUnit 5, Testcontainers(PostgreSQL) | Mapper·Service 테스트는 실제 PostgreSQL 컨테이너로 |
@@ -100,7 +100,7 @@ flowchart LR
 | 우편번호 | 카카오 우편번호 서비스 | 〃 | 〃 |
 | 라우팅 | React Router | 페이지 이동 | 페이지 이동 |
 | API 호출 | axios + TanStack Query | `fetch` 래퍼 함수 | (API 안 씀) |
-| API 타입 | `openapi.yaml`에서 생성 (openapi-typescript) | - | - |
+| API 타입 | `openapi.yaml`에서 생성 (`npm run gen:api` → `src/api/schema.d.ts`, 커밋함) | - | - |
 | 토큰 재발급 | axios 인터셉터 | `fetch` 래퍼에서 처리 | (세션) |
 | 트리 드래그 | SortableJS (react-sortablejs) | SortableJS | SortableJS |
 | 에디터 | Quill (작은 래퍼 컴포넌트로 직접 연결) | Quill | Quill |
@@ -283,7 +283,9 @@ sequenceDiagram
 | 로컬 | Docker Compose로 PostgreSQL 실행 + IDE에서 서버 실행 + Vite 개발 서버 | 프로필 `local` |
 | 개발 서버 | 서버 앱 1개(war 또는 실행형 jar) + PostgreSQL | 프로필 `dev` |
 
-- 비밀값(DB 비밀번호, JWT 서명 키, 최초 관리자 초기 비밀번호)은 설정 파일에 쓰지 않고 환경 변수로 넣는다.
+- 비밀값(DB 비밀번호, JWT 서명 키, 최초 관리자 초기 비밀번호, 테스트 관리자 비밀번호)은 설정 파일에 쓰지 않고 환경 변수로 넣는다. 로컬은 루트의 `.env`를 읽는다.
+- `local` 프로필은 테스트 데이터(`db/testdata/R__testdata.sql`)를 함께 넣는다. 이미 들어가 있으면 건너뛰므로, 다시 넣으려면 `docker compose down -v`로 DB를 초기화한다.
+- 명세 검사 도구는 프로젝트 의존성에 넣지 않고 버전을 고정해 `npx`로 실행한다 (`@redocly/cli` 2.57.0, `openapi-typescript` 7.13.0). `openapi-typescript`는 TypeScript 5까지만 지원해 React 프로젝트(TypeScript 6)에 함께 설치할 수 없기 때문이다.
 - 첨부파일 기본 경로는 설정값 `app.file.base-path`로 정한다.
 - 테스트용 데이터([03-initial-data.md](03-initial-data.md) 3절)는 `local`, `dev` 프로필에서만 Flyway로 넣는다.
 - 저장소가 **공개**이므로 비밀값을 절대 커밋하지 않는다. `.gitignore`로 `.env`를 제외하고, 필요한 변수 목록은 `.env.example`에 값 없이 둔다.

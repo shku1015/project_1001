@@ -13,7 +13,8 @@ admin-react/dist/
 admin-react/coverage/
 
 # 첨부파일 로컬 저장소
-data/
+/data/
+admin-web/data/
 
 # IDE / OS
 .idea/

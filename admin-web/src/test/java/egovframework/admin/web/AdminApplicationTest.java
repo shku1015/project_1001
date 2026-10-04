@@ -4,18 +4,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import egovframework.admin.web.support.IntegrationTest;
+
 /**
  * 골격 동작 확인: 실제 PostgreSQL에서 앱이 뜨고, Flyway·JSP·헬스 체크가 동작하는지.
  */
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Import(TestcontainersConfig.class)
+@IntegrationTest
 class AdminApplicationTest {
 
     @Autowired
