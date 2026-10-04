@@ -83,7 +83,7 @@ flowchart LR
 | HTML 정제 | jsoup Safelist | 게시글 본문의 허용 태그만 남김 (NF-WS-06) |
 | API 명세 | `api/openapi.yaml` (명세 우선) | API 형식의 정본. 개발 환경 Swagger UI는 이 파일을 그대로 보여 줌 ([ADR-0020](adr/0020-openapi-spec-first.md)) |
 | 명세 검사 | Redocly CLI (lint) | `openapi.yaml` 문법·규칙 검사 |
-| 계약 테스트 | `openapi-request-validator-core` 3.0.0 + 직접 만든 MockMvc 연결(`OpenApiContract`) | 통합 테스트에서 실제 요청·응답을 `openapi.yaml`과 대조. 공식 MockMvc 연동 모듈은 `javax.servlet` 기준이라 쓰지 않는다. 명세에 없는 응답 필드도 오류로 잡으므로 응답 스키마는 `allOf` 없이 펼쳐 쓴다 |
+| 계약 테스트 | `swagger-request-validator-core` 2.46.1 + 직접 만든 MockMvc 연결(`OpenApiContract`) | 통합 테스트에서 실제 요청·응답을 `openapi.yaml`과 대조. 3.x는 Java 21 바이트코드라 쓰지 않고, 공식 MockMvc 연동 모듈은 `javax.servlet` 기준이라 쓰지 않는다. 명세에 없는 응답 필드도 오류로 잡으므로 응답 스키마는 `allOf` 없이 펼쳐 쓴다 |
 | 배치 | Spring `@Scheduled` | 서버 1대 기준. 여러 대로 늘리면 중복 실행 방지가 필요 |
 | 로그 | Log4j2 (`spring-boot-starter-log4j2`) | 일별 파일, 30일 보관 (07 비기능 5절). 전자정부 실행환경(`ptl-mvc`)이 Log4j2를 쓰므로 Spring Boot 기본 Logback 대신 Log4j2로 통일 |
 | 테스트 | JUnit 5, Testcontainers(PostgreSQL) | Mapper·Service 테스트는 실제 PostgreSQL 컨테이너로 |
@@ -138,6 +138,7 @@ flowchart LR
 | Node.js (React 빌드) | 22 (`.nvmrc`) |
 
 - 위 값은 2026-10-05 프로젝트 생성 시 5.0.2 상위 POM에서 확인했다.
+- 로컬 JDK가 17보다 높아도 Java 17에서 못 읽는 의존성을 잡도록 Maven Enforcer `enforceBytecodeVersion`(최대 17)을 건다.
 - Testcontainers 1.21.x는 Docker 29 이상에서 기본 API 버전이 너무 낮아 실패한다. `admin-web/src/test/resources/docker-java.properties`에 `api.version=1.44`를 지정해 둔다.
 
 ## 4. 모듈 구조
