@@ -10,7 +10,7 @@
 
 ## 기술 스택
 
-- 백엔드: 전자정부프레임워크(eGovFrame, Spring 기반) 안정화 버전. 서버 애플리케이션 1개 (`/api/v1`, `/react`, `/jsp`, `/ssr`)
+- 백엔드: 전자정부프레임워크(eGovFrame) 5.0.2 (Spring Boot 3 계열, Java 17 이상). 서버 애플리케이션 1개 (`/api/v1`, `/react`, `/jsp`, `/ssr`)
 - UI: Bootstrap 5 + Tabler (세 프론트 공통), 에디터 Quill
 - DB: PostgreSQL
 - 인증: ① React, ② JSP + API는 토큰(JWT), ③ JSP SSR은 세션. REST API는 토큰 전용, JSP SSR 화면은 세션 전용
@@ -36,5 +36,7 @@
 
 - 기획 단계에서는 **기획 문서만 만들고 수정한다.** 프로젝트 생성, 소스 코드, 빌드 설정, DB 스키마 생성은 사용자가 요청할 때만 한다.
 - git 커밋은 사용자가 요청할 때만 한다.
+- `main`에 직접 커밋·push하지 않는다. 작업 브랜치(`feat/...`, `fix/...`, `docs/...`)에서 작업하고 PR로 병합한다 ([docs/adr/0018-github-flow-and-ci.md](docs/adr/0018-github-flow-and-ci.md)).
+- 저장소가 공개이므로 비밀값(DB 비밀번호, JWT 키, 초기 관리자 비밀번호)을 절대 커밋하지 않는다.
 - 문서와 대화는 한국어로 작성한다.
 - 기존 문서에서 정의한 용어는 [docs/01-overview.md](docs/01-overview.md)의 용어집을 따른다.

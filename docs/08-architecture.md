@@ -115,15 +115,16 @@ flowchart LR
 
 ## 3. 전자정부프레임워크 버전
 
-- **안정화(정식 배포) 버전**을 쓴다. 베타·RC 버전은 쓰지 않는다. 개발을 시작할 때 공식 사이트에서 그 시점의 최신 안정화 버전을 확인해 정하고, 그 버전이 지원하는 Java, Spring Boot, Servlet(Tomcat) 버전을 함께 따른다.
-- Spring Boot 기반 템플릿을 쓴다. JSP를 쓰므로 내장 Tomcat에 JSP 엔진(Jasper)을 추가하고 `war` 패키징을 기본으로 한다.
-- 정한 버전과 하위 라이브러리 버전은 이 절에 기록한다.
+- 전자정부프레임워크는 **5.0.2로 고정**한다 ([ADR-0017](adr/0017-egovframe-5-0-2.md)). 버전을 올릴 때는 새 ADR로 정한다.
+- 5.x는 Spring Framework 6 / Spring Boot 3 계열, Java 17 이상, Jakarta EE(`jakarta.*` 패키지) 기반이다. Spring Security도 6.x 설정 방식을 따른다.
+- Java, Spring Boot 등 하위 버전은 5.0.2가 지정하는 버전을 그대로 쓴다. 프로젝트를 만들 때 5.0.2의 릴리스 노트·`pom.xml`로 확인해 아래 표에 숫자로 기록한다. 따로 올리거나 내리지 않는다.
+- Spring Boot 기반 템플릿을 쓴다. JSP를 쓰므로 내장 Tomcat에 JSP 엔진(Jasper)과 Jakarta JSTL을 추가하고 `war` 패키징을 기본으로 한다.
 
 | 항목 | 버전 |
 |---|---|
-| 전자정부프레임워크 | (개발 시작 시 기록) |
-| Java | (〃) |
-| Spring Boot | (〃) |
+| 전자정부프레임워크 | **5.0.2** |
+| Java | 17 이상 (5.0.2 지정 버전, 프로젝트 생성 시 기록) |
+| Spring Boot | 3.x (5.0.2 지정 버전, 프로젝트 생성 시 기록) |
 | PostgreSQL | 16 이상 |
 | Node.js (React 빌드) | LTS |
 
@@ -271,6 +272,42 @@ sequenceDiagram
 - 비밀값(DB 비밀번호, JWT 서명 키, 최초 관리자 초기 비밀번호)은 설정 파일에 쓰지 않고 환경 변수로 넣는다.
 - 첨부파일 기본 경로는 설정값 `app.file.base-path`로 정한다.
 - 테스트용 데이터([03-initial-data.md](03-initial-data.md) 3절)는 `local`, `dev` 프로필에서만 Flyway로 넣는다.
+- 저장소가 **공개**이므로 비밀값을 절대 커밋하지 않는다. `.gitignore`로 `.env`를 제외하고, 필요한 변수 목록은 `.env.example`에 값 없이 둔다.
+
+### 8.1 Docker 사용 범위
+
+Docker는 **앱 배포용이 아니라 PostgreSQL을 띄우는 용도**로만 쓴다 ([ADR-0019](adr/0019-docker-for-database.md)).
+
+| 용도 | 방식 |
+|---|---|
+| 개발용 DB | `docker compose up -d`로 PostgreSQL 16 실행. 서버는 IDE에서 실행 |
+| 테스트용 DB | Testcontainers가 테스트 시작 시 PostgreSQL 컨테이너를 새로 만들고 끝나면 지운다 |
+| CI | GitHub Actions 실행 환경의 Docker로 로컬과 같은 Testcontainers 테스트를 실행 |
+
+- 테스트에 H2 같은 메모리 DB를 쓰지 않는다. JSONB, `pg_trgm`, 파티션 같은 PostgreSQL 전용 기능을 검증할 수 없기 때문이다.
+
+### 8.2 저장소·브랜치·CI
+
+| 항목 | 내용 |
+|---|---|
+| 저장소 | GitHub `shku1015/project_1001` (공개), 기본 브랜치 `main` |
+| 브랜치 전략 | GitHub Flow ([ADR-0018](adr/0018-github-flow-and-ci.md)). `main`은 항상 빌드·테스트가 통과하는 상태 |
+| 작업 브랜치 | `feat/{마일스톤}-{기능}` (예: `feat/m2-code`), `fix/...`, `docs/...` |
+| 병합 | PR로만 병합. CI 통과 후 Squash merge |
+| `main` 보호 | PR 필수, 강제 push·삭제 금지, 관리자도 예외 없음. CI 통과 필수 조건은 CI 파일을 만든 뒤 추가 |
+| CI | GitHub Actions `.github/workflows/ci.yml`. PR·`main` push마다 실행 |
+
+**CI 작업 구성**
+
+| 작업 | 내용 | 추가 시점 |
+|---|---|---|
+| `backend` | JDK 설정 → `./mvnw -B verify` (컴파일, 정적 검사, 단위·통합 테스트, Testcontainers) | M1 골격 |
+| `frontend` | Node 설정 → `npm ci` → lint, 타입 검사, 테스트, 빌드 | M1 골격 |
+| `e2e` | 앱 실행 → Playwright 시나리오를 `/react`, `/jsp`, `/ssr`로 3회 실행. 실패 시 스크린샷·trace 보관 | M1 로그인 화면 완성 후 |
+| `api-snapshot` (선택) | springdoc이 만든 `openapi.json`을 커밋된 스냅숏과 비교해 의도치 않은 API 변경을 잡는다 | M2 이후 |
+
+- 테스트는 설정 파일의 더미 값(JWT 키 등)으로 돌아가게 해서 CI에 비밀값이 필요 없게 한다.
+- 에이전트 작업 흐름: 브랜치 생성 → 구현 → 로컬 검증 → push → `gh pr create` → `gh pr checks`로 CI 확인 → 실패 시 `gh run view --log-failed`로 원인 확인 후 수정 → 사용자가 검토 후 병합.
 
 ## 9. 개발 순서 제안
 
@@ -290,6 +327,4 @@ sequenceDiagram
 
 ## 10. 미결 사항
 
-| No | 내용 | 제안 |
-|---|---|---|
-| 1 | 전자정부프레임워크 안정화 버전 번호 | 개발 시작 시 확인해 3절 표에 기록 |
+없음.

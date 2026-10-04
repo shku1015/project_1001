@@ -22,6 +22,9 @@
 | [0014](0014-no-egov-common-tables.md) | 전자정부프레임워크 공통컴포넌트 테이블을 쓰지 않음 | 승인 | 2026-10-04 |
 | [0015](0015-menu-order-deferred-save.md) | 메뉴 순서는 드래그·버튼으로 바꾸고 확정 시 저장 | 승인 | 2026-10-04 |
 | [0016](0016-relaxed-password-policy.md) | 비밀번호 규칙을 학습용으로 완화 | 승인 | 2026-10-04 |
+| [0017](0017-egovframe-5-0-2.md) | 전자정부프레임워크 5.0.2로 고정 | 승인 | 2026-10-04 |
+| [0018](0018-github-flow-and-ci.md) | GitHub Flow와 GitHub Actions CI | 승인 | 2026-10-05 |
+| [0019](0019-docker-for-database.md) | Docker는 개발·테스트용 PostgreSQL에만 사용 | 승인 | 2026-10-05 |
 
 ## 작성 규칙
 
