@@ -30,7 +30,7 @@
 - **GitHub Flow**를 쓴다. 작업 브랜치 이름은 `feat/{마일스톤}-{기능}`, `fix/...`, `docs/...`.
 - `main` 보호: PR 필수, 강제 push·삭제 금지, **관리자도 예외 없음**. 혼자 개발하므로 승인 리뷰 수는 0으로 둔다 (본인 PR을 본인이 승인할 수 없기 때문).
 - 병합은 CI 통과 후 Squash merge.
-- CI는 GitHub Actions. 작업은 `backend`, `frontend`, `e2e`(세 프론트 3회 실행), 선택으로 `api-snapshot`.
+- CI는 GitHub Actions. 작업은 `backend`, `frontend`, `api-spec`(명세 검사, [ADR-0020](0020-openapi-spec-first.md)), `e2e`(세 프론트 3회 실행).
 - CI 통과를 병합 필수 조건으로 거는 것은 CI 파일을 만든 뒤에 추가한다.
 
 ## 결과

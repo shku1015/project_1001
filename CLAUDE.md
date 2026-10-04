@@ -24,6 +24,7 @@
 
 - 개발은 [docs/08-architecture.md](docs/08-architecture.md) 9절의 개발 순서를 따른다.
 - 기획 문서를 바꿔야 하면 해당 문서와 영향받는 문서를 함께 고친다.
+- API는 명세 우선이다. API를 추가·변경할 때는 `api/openapi.yaml`을 먼저 고치고, 서버는 계약 테스트로, React는 생성 타입으로 맞춘다 ([docs/adr/0020-openapi-spec-first.md](docs/adr/0020-openapi-spec-first.md)).
 - 제품 요구사항 요약은 [docs/prd.md](docs/prd.md), 설계 결정의 이유는 [docs/adr/](docs/adr/README.md)에 있다.
 - 기존 결정을 바꾸거나 중요한 설계 결정을 새로 내리면 ADR을 추가한다. 기존 ADR은 지우지 않고 상태를 "대체됨"으로 바꾼다.
 

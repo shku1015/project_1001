@@ -25,6 +25,7 @@
 | [0017](0017-egovframe-5-0-2.md) | 전자정부프레임워크 5.0.2로 고정 | 승인 | 2026-10-04 |
 | [0018](0018-github-flow-and-ci.md) | GitHub Flow와 GitHub Actions CI | 승인 | 2026-10-05 |
 | [0019](0019-docker-for-database.md) | Docker는 개발·테스트용 PostgreSQL에만 사용 | 승인 | 2026-10-05 |
+| [0020](0020-openapi-spec-first.md) | API 명세는 openapi.yaml을 먼저 쓰는 방식(명세 우선) | 승인 | 2026-10-05 |
 
 ## 작성 규칙
 

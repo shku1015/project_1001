@@ -81,7 +81,9 @@ flowchart LR
 | 화면 템플릿 (②③) | JSP + JSTL | 공통 레이아웃은 JSP 태그 파일(`.tag`)로 만든다 |
 | 엑셀 | Apache POI (SXSSF) | 대량 행을 메모리 적게 쓰며 생성 |
 | HTML 정제 | jsoup Safelist | 게시글 본문의 허용 태그만 남김 (NF-WS-06) |
-| API 문서 | springdoc-openapi | 코드에서 Swagger UI 생성 (개발 환경만 노출) |
+| API 명세 | `api/openapi.yaml` (명세 우선) | API 형식의 정본. 개발 환경 Swagger UI는 이 파일을 그대로 보여 줌 ([ADR-0020](adr/0020-openapi-spec-first.md)) |
+| 명세 검사 | Redocly CLI (lint) | `openapi.yaml` 문법·규칙 검사 |
+| 계약 테스트 | OpenAPI 요청·응답 검증 라이브러리 (예: swagger-request-validator) | 통합 테스트에서 실제 요청·응답을 `openapi.yaml`과 대조 |
 | 배치 | Spring `@Scheduled` | 서버 1대 기준. 여러 대로 늘리면 중복 실행 방지가 필요 |
 | 로그 | Logback | 일별 파일, 30일 보관 (07 비기능 5절) |
 | 테스트 | JUnit 5, Testcontainers(PostgreSQL) | Mapper·Service 테스트는 실제 PostgreSQL 컨테이너로 |
@@ -98,6 +100,7 @@ flowchart LR
 | 우편번호 | 카카오 우편번호 서비스 | 〃 | 〃 |
 | 라우팅 | React Router | 페이지 이동 | 페이지 이동 |
 | API 호출 | axios + TanStack Query | `fetch` 래퍼 함수 | (API 안 씀) |
+| API 타입 | `openapi.yaml`에서 생성 (openapi-typescript) | - | - |
 | 토큰 재발급 | axios 인터셉터 | `fetch` 래퍼에서 처리 | (세션) |
 | 트리 드래그 | SortableJS (react-sortablejs) | SortableJS | SortableJS |
 | 에디터 | Quill (작은 래퍼 컴포넌트로 직접 연결) | Quill | Quill |
@@ -134,6 +137,8 @@ flowchart LR
 project_1001/
 ├─ CLAUDE.md
 ├─ docs/                         기획 문서
+├─ api/
+│  └─ openapi.yaml               API 명세 정본 (명세 우선, ADR-0020)
 ├─ pom.xml                       Maven 상위 POM
 ├─ admin-core/                   공통 + 업무 로직 (화면·인증 방식과 무관)
 │  └─ src/main/java/egovframework/admin/
@@ -304,7 +309,9 @@ Docker는 **앱 배포용이 아니라 PostgreSQL을 띄우는 용도**로만 �
 | `backend` | JDK 설정 → `./mvnw -B verify` (컴파일, 정적 검사, 단위·통합 테스트, Testcontainers) | M1 골격 |
 | `frontend` | Node 설정 → `npm ci` → lint, 타입 검사, 테스트, 빌드 | M1 골격 |
 | `e2e` | 앱 실행 → Playwright 시나리오를 `/react`, `/jsp`, `/ssr`로 3회 실행. 실패 시 스크린샷·trace 보관 | M1 로그인 화면 완성 후 |
-| `api-snapshot` (선택) | springdoc이 만든 `openapi.json`을 커밋된 스냅숏과 비교해 의도치 않은 API 변경을 잡는다 | M2 이후 |
+| `api-spec` | `openapi.yaml` lint(Redocly). React에서 타입을 다시 생성해 커밋된 타입과 다르면 실패 (명세만 바꾸고 타입을 갱신하지 않은 경우) | M1 골격 |
+
+- 서버 계약 테스트(실제 응답을 `openapi.yaml`로 검증)는 `backend` 작업의 `./mvnw verify`에 포함된다.
 
 - 테스트는 설정 파일의 더미 값(JWT 키 등)으로 돌아가게 해서 CI에 비밀값이 필요 없게 한다.
 - 에이전트 작업 흐름: 브랜치 생성 → 구현 → 로컬 검증 → push → `gh pr create` → `gh pr checks`로 CI 확인 → 실패 시 `gh run view --log-failed`로 원인 확인 후 수정 → 사용자가 검토 후 병합.
@@ -323,7 +330,7 @@ Docker는 **앱 배포용이 아니라 PostgreSQL을 띄우는 용도**로만 �
 | 6 | 감사로그 조회, 배치 |
 | 7 | 성능 데이터 넣고 확인, 공통 E2E 테스트 |
 
-각 단계는 "서버(API·Service) → ① React → ② JSP + API → ③ JSP SSR" 순서로 만든다.
+각 단계는 "`openapi.yaml` 작성 → 서버(API·Service, 계약 테스트) → ① React(타입 생성) → ② JSP + API → ③ JSP SSR" 순서로 만든다.
 
 ## 10. 미결 사항
 
