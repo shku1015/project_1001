@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 일별 파일, 30일 보관 (docs/07-nonfunctional.md 5절). 개인정보·비밀번호·토큰은 로그에 남기지 않는다 (NF-PI-15). -->
+<Configuration status="WARN">
+    <Properties>
+        <Property name="LOG_DIR">${sys:LOG_PATH:-logs}</Property>
+        <Property name="PATTERN">%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%t] %logger{36} - %msg%n</Property>
+    </Properties>
+
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="${PATTERN}"/>
+        </Console>
+        <RollingFile name="File" fileName="${LOG_DIR}/admin.log"
+                     filePattern="${LOG_DIR}/admin-%d{yyyy-MM-dd}.log">
+            <PatternLayout pattern="${PATTERN}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+            </Policies>
+            <DefaultRolloverStrategy>
+                <Delete basePath="${LOG_DIR}">
+                    <IfFileName glob="admin-*.log"/>
+                    <IfLastModified age="30d"/>
+                </Delete>
+            </DefaultRolloverStrategy>
+        </RollingFile>
+    </Appenders>
+
+    <Loggers>
+        <Logger name="egovframework.admin" level="INFO"/>
+        <Root level="INFO">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="File"/>
+        </Root>
+    </Loggers>
+</Configuration>
