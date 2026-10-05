@@ -1,0 +1,19 @@
+{
+  "name": "admin-e2e",
+  "private": true,
+  "version": "0.0.0",
+  "description": "세 프론트(/react, /jsp, /ssr) 공통 E2E. 실행: 저장소 루트에서 ./verify.sh e2e",
+  "type": "module",
+  "scripts": {
+    "test": "playwright test",
+    "report": "playwright show-report"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "@types/pg": "^8.23.1",
+    "pg": "^8.23.1"
+  }
+}

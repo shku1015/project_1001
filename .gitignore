@@ -12,6 +12,10 @@ node_modules/
 admin-react/dist/
 admin-react/coverage/
 
+# E2E 결과
+e2e/test-results/
+e2e/playwright-report/
+
 # 첨부파일 로컬 저장소
 /data/
 admin-web/data/

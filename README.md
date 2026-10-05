@@ -16,11 +16,14 @@
 필요한 것: JDK 17 이상, Node.js 22, Docker
 
 ```bash
-cp .env.example .env          # DB_PASSWORD 등 값 채우기
+cp .env.example .env          # DB_PASSWORD, JWT_SECRET, TEST_ADMIN_PASSWORD 채우기 (로컬은 COOKIE_SECURE=false)
 docker compose up -d          # 개발용 PostgreSQL
-./mvnw -pl admin-web -am spring-boot:run   # 서버: http://localhost:8080
-cd admin-react && npm install && npm run dev  # React 개발 서버
+(cd admin-react && npm install && npm run build)   # 서버가 /react 로 제공할 빌드
+SPRING_PROFILES_ACTIVE=local ./mvnw -pl admin-web -am spring-boot:run   # 서버: http://localhost:8080
 ```
+
+- http://localhost:8080/ 에서 세 프론트 중 하나를 고른다. 테스트 관리자(`t_super`, `t_system` 등)의 비밀번호는 `TEST_ADMIN_PASSWORD`다.
+- React를 고치면서 보려면 `cd admin-react && npm run dev` → http://localhost:5173/react/ (API는 8080 서버로 넘어간다).
 
 ## 검증
 
@@ -28,4 +31,5 @@ cd admin-react && npm install && npm run dev  # React 개발 서버
 ./verify.sh            # 전체 (CI와 같은 검사)
 ./verify.sh backend    # 백엔드: 빌드·테스트 (Docker 필요)
 ./verify.sh frontend   # 프론트: lint·타입 검사·테스트·빌드
+./verify.sh e2e        # 세 프론트 공통 E2E (Playwright, DB 필요)
 ```

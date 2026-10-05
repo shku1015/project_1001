@@ -26,7 +26,10 @@
 |---|---|
 | `admin-core/` | 업무 로직 (Service, Mapper, 공통). Flyway SQL은 `src/main/resources/db/migration/` |
 | `admin-web/` | 실행 앱 (war). 컨트롤러, JSP(`src/main/webapp/WEB-INF/views/`), 설정 |
-| `admin-react/` | ① React 프로젝트 |
+| `admin-react/` | ① React 프로젝트 (`src/api` API·토큰, `src/auth` 로그인 상태, `src/components` 공통, `src/pages` 화면) |
+| `admin-web/src/main/webapp/WEB-INF/views/{ssr,jsp}` | ③ SSR, ② JSP + API 화면. 공통 레이아웃은 `WEB-INF/tags/` |
+| `admin-web/src/main/resources/static/common/` | ②③ 공통 CSS·JS (`admin-api.js` 토큰·API, `admin-jsp.js` ② 레이아웃) |
+| `e2e/` | 세 프론트 공통 Playwright E2E |
 | `api/openapi.yaml` | API 명세 정본. 바꾸면 `cd admin-react && npm run gen:api`로 타입 재생성 |
 | `docs/` | 기획 문서, PRD, ADR |
 | `docs/data/` | 기계 판독용 명세 데이터 (권한 매트릭스 CSV 등). 원본 표를 바꾸면 함께 바꾼다 |
@@ -36,6 +39,7 @@
 | 목적 | 명령 |
 |---|---|
 | **작업 완료 전 검증 (필수)** | `./verify.sh` (전체) / `./verify.sh api` / `./verify.sh backend` / `./verify.sh frontend` |
+| 화면을 바꿨을 때 E2E | `./verify.sh e2e` (DB가 떠 있어야 한다. 서버를 18080 포트로 띄우고 세 프론트를 검증한다) |
 | 개발용 DB | `docker compose up -d` (`.env` 필요, `.env.example` 참고. 서버 실행에는 `JWT_SECRET`, 로컬은 `COOKIE_SECURE=false`도 필요) |
 | 서버 실행 (테스트 데이터 포함) | `SPRING_PROFILES_ACTIVE=local ./mvnw -pl admin-web -am spring-boot:run` |
 | React 개발 서버 | `cd admin-react && npm run dev` |
@@ -50,6 +54,9 @@
 - 감사로그는 Service에서 `AuditLogService.record(...)`를 같은 트랜잭션 안에서 직접 호출한다. 개인정보는 마스킹한 값, 비밀번호·토큰은 넣지 않는다.
 - 역할·권한·메뉴·관리자 상태를 바꾸면 `AdminAuthInfoService.evict/evictAll`로 권한 캐시를 비운다.
 
+- 화면은 세 프론트(`/react`, `/jsp`, `/ssr`)가 같은 마크업 구조·같은 문구·같은 입력 칸 id를 쓴다. 한 프론트만 고치지 않는다.
+- ② JSP 화면과 ① React는 API만 쓰고, ③ SSR은 Service를 직접 쓴다.
+
 ## 테스트 작성 규칙
 
 - 통합 테스트는 `@IntegrationTest`(실제 PostgreSQL + 운영 필수 데이터 + MockMvc)를 붙인다.
@@ -58,9 +65,10 @@
 - API 테스트는 응답을 `OpenApiContract.assertValid(result)`로 `api/openapi.yaml`과 대조한다 (계약 테스트).
 - 오류 코드를 추가하면 `ErrorCode`(Java)와 `openapi.yaml`의 `ErrorCode` enum을 함께 고친다 (`ErrorCodeSpecTest`가 확인).
 - 권한 매트릭스를 바꾸면 `docs/02-access-model.md` 6절, `docs/data/permission-matrix.csv`, Flyway 데이터를 함께 고친다 (`SeedDataTest`가 확인).
-- DB 구조를 바꿀 때는 기존 Flyway 파일을 고치지 않고 새 버전(`V4__...`)을 추가한다.
+- DB 구조를 바꿀 때는 기존 Flyway 파일을 고치지 않고 새 버전(`V5__...`)을 추가한다.
+- 화면 시나리오는 `e2e/tests/`에 한 번만 쓰고 세 프론트에서 실행한다 (`test.info().project.metadata.prefix`).
 
-## 현재 단계: 개발 M1 (골격·하네스 기반·인증 서버 완료, 세 프론트 로그인 화면 진행 전)
+## 현재 단계: 개발 M1 마무리 (인증 서버, 세 프론트 공통 레이아웃·로그인·홈·비밀번호·내 정보, E2E)
 
 - 개발은 [docs/08-architecture.md](docs/08-architecture.md) 9절의 개발 순서를 따른다.
 - API는 명세 우선이다. API를 추가·변경할 때는 `api/openapi.yaml`을 먼저 고치고, 서버는 계약 테스트로, React는 생성 타입으로 맞춘다 ([docs/adr/0020-openapi-spec-first.md](docs/adr/0020-openapi-spec-first.md)).

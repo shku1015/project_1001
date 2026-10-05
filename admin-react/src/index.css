@@ -1,5 +1,20 @@
-/* UI는 Bootstrap 5 + Tabler로 맞춘다 (ADR-0013). 공통 레이아웃 단계에서 교체한다. */
-body {
-  margin: 0;
-  font-family: system-ui, sans-serif;
+/* ①의 보정 스타일. ②③의 admin-web/src/main/resources/static/common/css/admin.css와 같게 유지한다. */
+.navbar-vertical .menu-folder {
+  font-weight: 600;
+  opacity: 0.75;
+  cursor: default;
+}
+
+.navbar-vertical .menu-children {
+  padding-left: 0.75rem;
+}
+
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+}
+
+.shortcut-list a {
+  min-width: 10rem;
 }

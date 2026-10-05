@@ -7,6 +7,7 @@
 #   ./verify.sh api        명세만: openapi.yaml lint, React 생성 타입이 명세와 같은지
 #   ./verify.sh backend    백엔드만: 컴파일, 테스트(Testcontainers, Docker 필요). 계약 테스트 포함
 #   ./verify.sh frontend   프론트만: lint, 타입 검사, 테스트, 빌드
+#   ./verify.sh e2e        세 프론트 공통 E2E (DB가 떠 있어야 한다. scripts/e2e.sh). 전체(all)에는 포함하지 않는다
 #
 # 추가 Maven 옵션은 MVN_ARGS 환경 변수로 넘긴다. 예: MVN_ARGS="-Dmaven.repo.local=/tmp/m2"
 set -euo pipefail
@@ -51,8 +52,9 @@ case "$TARGET" in
     api) api ;;
     backend) backend ;;
     frontend) frontend ;;
+    e2e) shift; "$ROOT/scripts/e2e.sh" "$@" ;;
     all) api; backend; frontend ;;
-    *) echo "사용법: $0 [all|api|backend|frontend]" >&2; exit 2 ;;
+    *) echo "사용법: $0 [all|api|backend|frontend|e2e]" >&2; exit 2 ;;
 esac
 
 echo "== verify: 통과"

@@ -1,0 +1,20 @@
+/* ②③ 공통 보정 스타일. ① React도 같은 규칙을 src/index.css에 둔다. */
+.navbar-vertical .menu-folder {
+  font-weight: 600;
+  opacity: 0.75;
+  cursor: default;
+}
+
+.navbar-vertical .menu-children {
+  padding-left: 0.75rem;
+}
+
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+}
+
+.shortcut-list a {
+  min-width: 10rem;
+}

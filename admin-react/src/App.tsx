@@ -1,11 +1,20 @@
-// ① React 프론트 골격. 화면은 docs/05-ia-screens.md 기준으로 M1 인증 단계부터 채운다.
-function App() {
+import { Route, Routes } from 'react-router'
+import { RequireAuth } from './auth/RequireAuth'
+import { HomePage } from './pages/HomePage'
+import { LoginPage } from './pages/LoginPage'
+import { MePage } from './pages/MePage'
+import { NotFoundPage } from './pages/NotFoundPage'
+import { PasswordPage } from './pages/PasswordPage'
+
+// ① React 화면 경로 (docs/05-ia-screens.md 5절). 실제 주소는 /react 접두어가 붙는다 (main.tsx basename)
+export function App() {
   return (
-    <main>
-      <h1>관리자 서비스</h1>
-      <p>① React (토큰 인증)</p>
-    </main>
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/" element={<RequireAuth><HomePage /></RequireAuth>} />
+      <Route path="/me" element={<RequireAuth><MePage /></RequireAuth>} />
+      <Route path="/password" element={<RequireAuth allowTempPassword><PasswordPage /></RequireAuth>} />
+      <Route path="*" element={<RequireAuth><NotFoundPage /></RequireAuth>} />
+    </Routes>
   )
 }
-
-export default App

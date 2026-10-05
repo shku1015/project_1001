@@ -184,7 +184,9 @@ project_1001/
 ```
 
 - `admin-core`는 웹·인증 방식을 모른다. Service는 "현재 관리자"를 인터페이스로 받아 API(토큰)와 SSR(세션) 어느 쪽에서 불러도 같게 동작한다.
-- React는 개발 중에는 Vite 개발 서버(API는 프록시)로, 배포할 때는 빌드 결과를 `admin-web`의 `/react` 정적 경로에 넣어 함께 배포한다.
+- React는 개발 중에는 Vite 개발 서버(API는 프록시)로 실행한다. 서버는 `app.react.location`(기본 `file:../admin-react/dist/`, 환경 변수 `REACT_DIST`)의 빌드 결과를 `/react/**`로 제공하고, 파일이 없는 화면 주소는 `index.html`로 넘긴다. war 안에 빌드 결과를 넣는 배포 방식은 배포 구성을 정할 때 추가한다.
+- ②③ JSP는 Tabler를 WebJar(`org.webjars.npm:tabler__core`)로 받아 `/webjars/tabler__core/{버전}/dist/`에서 쓴다. ①은 npm `@tabler/core` 같은 버전을 쓴다.
+- ②③의 공통 레이아웃은 JSP 태그 파일(`WEB-INF/tags/layout.tag`, `menu.tag`, `head.tag`)이다. ③은 서버가 메뉴를 그리고, ②는 같은 자리를 `static/common/js/admin-jsp.js`가 API로 채운다.
 
 ## 5. 요청 처리 흐름
 
@@ -321,7 +323,7 @@ Docker는 **앱 배포용이 아니라 PostgreSQL을 띄우는 용도**로만 �
 |---|---|---|
 | `backend` | JDK 설정 → `./mvnw -B verify` (컴파일, 정적 검사, 단위·통합 테스트, Testcontainers) | M1 골격 |
 | `frontend` | Node 설정 → `npm ci` → lint, 타입 검사, 테스트, 빌드 | M1 골격 |
-| `e2e` | 앱 실행 → Playwright 시나리오를 `/react`, `/jsp`, `/ssr`로 3회 실행. 실패 시 스크린샷·trace 보관 | M1 로그인 화면 완성 후 |
+| `e2e` | `scripts/e2e.sh`: React 빌드 → 서버 패키징·실행(`local` 프로필, PostgreSQL 서비스) → Playwright 시나리오를 `/react`, `/jsp`, `/ssr`로 3회 실행. 실패 시 스크린샷·trace·서버 로그 보관 | M1 (추가됨) |
 | `api-spec` | `openapi.yaml` lint(Redocly). React에서 타입을 다시 생성해 커밋된 타입과 다르면 실패 (명세만 바꾸고 타입을 갱신하지 않은 경우) | M1 골격 |
 
 - 서버 계약 테스트(실제 응답을 `openapi.yaml`로 검증)는 `backend` 작업의 `./mvnw verify`에 포함된다.
