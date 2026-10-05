@@ -12,10 +12,10 @@ import org.springframework.web.bind.annotation.RestController;
 import egovframework.admin.code.CodeItem;
 import egovframework.admin.code.CodeService;
 import egovframework.admin.common.ApiResponse;
+import egovframework.admin.web.security.LoginOnly;
 
 /**
- * 공통 코드 조회 API (docs/06-api-spec.md 9절, api/openapi.yaml).
- * TODO(M1 인증): 로그인한 관리자만 호출할 수 있게 보안 설정을 붙인다.
+ * 공통 코드 조회 API (docs/06-api-spec.md 9절, api/openapi.yaml). 로그인만 필요하다.
  */
 @RestController
 @RequestMapping("/api/v1/common/codes")
@@ -28,12 +28,14 @@ public class CommonCodeApiController {
     }
 
     @GetMapping("/{groupCd}")
+    @LoginOnly
     public ApiResponse<List<CodeItem>> getCodes(@PathVariable String groupCd,
                                                 @RequestParam(defaultValue = "N") String includeUnused) {
         return ApiResponse.ok(codeService.getCodes(groupCd, "Y".equals(includeUnused)));
     }
 
     @GetMapping
+    @LoginOnly
     public ApiResponse<Map<String, List<CodeItem>>> getCodesByGroups(@RequestParam List<String> groups) {
         return ApiResponse.ok(codeService.getCodes(groups));
     }

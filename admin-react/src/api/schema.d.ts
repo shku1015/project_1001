@@ -4,6 +4,100 @@
  */
 
 export interface paths {
+    "/auth/token": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 로그인. Access Token 응답 + Refresh Token 쿠키
+         * @description 성공하면 Set-Cookie로 refreshToken(HttpOnly, SameSite=Strict, Path=/api/v1/auth/token)을 내려준다.
+         *     같은 아이디의 기존 로그인(세션·토큰)은 모두 끊는다 (NF-LG-02).
+         */
+        post: operations["login"];
+        /** 로그아웃. Refresh Token 폐기, 쿠키 삭제 */
+        delete: operations["logout"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/token/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** 토큰 재발급 (Refresh Token 쿠키 사용, 한 번 쓰면 교체) */
+        post: operations["refreshToken"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 내 정보 + 메뉴 트리 + 권한 목록 (메뉴 노출·버튼 활성화용) */
+        get: operations["getMe"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** 내 정보 수정 */
+        put: operations["updateMyInfo"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * 비밀번호 변경
+         * @description 성공하면 이 관리자의 다른 로그인(세션·Refresh Token)을 모두 끊고,
+         *     현재 로그인을 이어가도록 새 Access Token과 새 Refresh Token 쿠키를 준다.
+         */
+        put: operations["changeMyPassword"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/common/codes/{groupCd}": {
         parameters: {
             query?: never;
@@ -74,8 +168,105 @@ export interface components {
         };
         /** @enum {string} */
         YnFlag: "Y" | "N";
+        /**
+         * @description 한국 시간 일시, 초 단위, 시간대 표기 없음 (docs/06-api-spec.md 1절). 동시 수정 방지의 modDt도 이 형식
+         * @example 2026-10-04T14:30:15
+         */
+        DateTime: string;
         /** @enum {string} */
         ErrorCode: "VALIDATION_ERROR" | "INVALID_REQUEST" | "UNAUTHORIZED" | "TOKEN_EXPIRED" | "REFRESH_FAILED" | "LOGIN_FAILED" | "FORBIDDEN" | "PASSWORD_CHANGE_REQUIRED" | "ACCOUNT_LOCKED" | "ACCOUNT_DISABLED" | "NOT_FOUND" | "DUPLICATE" | "CONFLICT_MODIFIED" | "EXCEL_LIMIT_EXCEEDED" | "FILE_TOO_LARGE" | "INTERNAL_ERROR" | "INVALID_STATUS_CHANGE" | "REASON_REQUIRED" | "COMPANY_HAS_MEMBERS" | "COMPANY_NOT_ACTIVE" | "COMPANY_REQUIRED" | "USER_WITHDRAWN" | "MENU_DEPTH_EXCEEDED" | "MENU_PARENT_NOT_FOLDER" | "MENU_HAS_CHILDREN" | "MENU_SYSTEM_PROTECTED" | "MENU_BOARD_MANAGED" | "MENU_ORDER_MISMATCH" | "MENU_NOT_PAGE" | "CODE_SYSTEM_PROTECTED" | "CODE_GROUP_HAS_CODES" | "BOARD_MENU_EXISTS" | "BOARD_MENU_NOT_FOUND" | "REPLY_NOT_ALLOWED" | "COMMENT_NOT_ALLOWED" | "COMMENT_DEPTH_EXCEEDED" | "ATTACH_NOT_ALLOWED" | "ATTACH_COUNT_EXCEEDED" | "FILE_TYPE_NOT_ALLOWED" | "ROLE_REQUIRED" | "SELF_ROLE_CHANGE" | "SELF_DISABLE" | "PRIVILEGE_ESCALATION" | "LAST_SUPER_ADMIN" | "ROLE_NOT_USABLE" | "ROLE_NOT_EDITABLE" | "ROLE_IN_USE" | "ROLE_SYSTEM_PROTECTED";
+        EmptyResponse: {
+            /** @enum {boolean} */
+            success: true;
+            /** @enum {object|null} */
+            data: never | null;
+            error: components["schemas"]["NullError"];
+        };
+        LoginRequest: {
+            loginId: string;
+            /** Format: password */
+            password: string;
+        };
+        Token: {
+            accessToken: string;
+            /**
+             * @description Access Token 유효 시간(초)
+             * @example 1800
+             */
+            expiresIn: number;
+            /** @description true면 비밀번호 변경 화면으로 보낸다 (임시 비밀번호) */
+            pwdChangeRequired: boolean;
+        };
+        TokenResponse: {
+            /** @enum {boolean} */
+            success: true;
+            data: components["schemas"]["Token"];
+            error: components["schemas"]["NullError"];
+        };
+        RoleSummary: {
+            roleCd: string;
+            roleNm: string;
+        };
+        MenuNode: {
+            /** Format: int64 */
+            menuId: number;
+            menuCd: string;
+            menuNm: string;
+            /** @enum {string} */
+            menuTypeCd: "FOLDER" | "PAGE";
+            /** @description 프론트 접두어(/react, /jsp, /ssr) 없는 경로 */
+            menuUrl: string | null;
+            icon: string | null;
+            children: components["schemas"]["MenuNode"][];
+        };
+        Me: {
+            /** Format: int64 */
+            adminId: number;
+            loginId: string;
+            adminNm: string;
+            email: string;
+            mobileNo: string | null;
+            deptNm: string | null;
+            roles: components["schemas"]["RoleSummary"][];
+            /** @description true면 모든 권한 (permissions는 비어 있다, ADR-0002) */
+            superAdmin: boolean;
+            /** @description 이번 로그인 직전의 로그인 일시 */
+            lastLoginDt: string | null;
+            lastLoginIp: string | null;
+            pwdChangedDt: string | null;
+            pwdChangeRequired: boolean;
+            menus: components["schemas"]["MenuNode"][];
+            /** @description 메뉴 코드 → 액션 목록 */
+            permissions: {
+                [key: string]: components["schemas"]["Action"][];
+            };
+            modDt: components["schemas"]["DateTime"];
+        };
+        MeResponse: {
+            /** @enum {boolean} */
+            success: true;
+            data: components["schemas"]["Me"];
+            error: components["schemas"]["NullError"];
+        };
+        /** @enum {string} */
+        Action: "READ" | "CREATE" | "UPDATE" | "DELETE" | "EXCEL" | "PRIVACY";
+        UpdateMyInfoRequest: {
+            adminNm: string;
+            /** Format: email */
+            email: string;
+            mobileNo?: string | null;
+            deptNm?: string | null;
+            modDt: components["schemas"]["DateTime"];
+        };
+        ChangePasswordRequest: {
+            /** Format: password */
+            currentPassword: string;
+            /**
+             * Format: password
+             * @description 1~20자 (docs/07-nonfunctional.md 1.1)
+             */
+            newPassword: string;
+        };
         CodeItem: {
             /** @example SUSPENDED */
             code: string;
@@ -170,6 +361,181 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    login: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoginRequest"];
+            };
+        };
+        responses: {
+            /** @description 로그인 성공 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TokenResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            /** @description 아이디 또는 비밀번호 오류 (LOGIN_FAILED) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description 잠금·사용중지 계정 (ACCOUNT_LOCKED, ACCOUNT_DISABLED) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            500: components["responses"]["InternalError"];
+        };
+    };
+    logout: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 로그아웃 완료 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmptyResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    refreshToken: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 새 Access Token + 새 Refresh Token 쿠키 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TokenResponse"];
+                };
+            };
+            /** @description 만료·폐기·재사용된 Refresh Token (REFRESH_FAILED) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            403: components["responses"]["Forbidden"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    getMe: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 내 정보 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    updateMyInfo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateMyInfoRequest"];
+            };
+        };
+        responses: {
+            /** @description 수정 완료 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmptyResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    changeMyPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangePasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description 변경 완료 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TokenResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            500: components["responses"]["InternalError"];
+        };
+    };
     getCodes: {
         parameters: {
             query?: {
@@ -195,6 +561,7 @@ export interface operations {
                 };
             };
             401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             500: components["responses"]["InternalError"];
         };
@@ -227,6 +594,7 @@ export interface operations {
             };
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             500: components["responses"]["InternalError"];
         };

@@ -16,7 +16,7 @@
 | 데이터 형식 | 요청·응답 모두 JSON (`Content-Type: application/json; charset=UTF-8`). 파일 업로드만 `multipart/form-data` |
 | 필드 이름 | camelCase. DB 칼럼 이름을 camelCase로 바꾼 것을 기본으로 한다 (`COMPANY_NM` → `companyNm`, `USE_YN` → `useYn`) |
 | 여부 값 | 문자열 `"Y"` / `"N"` (DB와 같게) |
-| 일시 | ISO 8601 문자열, 한국 시간 기준 `"2026-10-04T14:30:15"` |
+| 일시 | ISO 8601 문자열, 한국 시간 기준, **초 단위, 시간대 표기 없음** `"2026-10-04T14:30:15"` (`openapi.yaml`의 `DateTime`) |
 | 날짜 | `"2026-10-04"` |
 | 코드값 | 코드만 보낸다 (`"statusCd": "ACTIVE"`). 응답에는 코드명을 함께 준다 (`"statusNm": "정상"`) |
 | 빈 값 | `null`. 빈 문자열은 서버에서 `null`로 바꾼다 |
@@ -136,7 +136,7 @@
 
 - 상세 조회 응답에 `modDt`를 준다.
 - 수정(`PUT`, `PATCH`) 요청에 조회했던 `modDt`를 그대로 보낸다.
-- 서버의 `MOD_DT`와 다르면 저장하지 않고 409 `CONFLICT_MODIFIED`를 준다. 프론트는 "다른 관리자가 먼저 수정했습니다. 다시 조회하세요"를 보여 준다.
+- 서버의 `MOD_DT`와 **초 단위까지** 비교해 다르면 저장하지 않고 409 `CONFLICT_MODIFIED`를 준다. 프론트는 "다른 관리자가 먼저 수정했습니다. 다시 조회하세요"를 보여 준다.
 
 ## 8. 파일
 

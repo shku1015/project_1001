@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.admin.menu.MenuMapper">
+
+    <select id="selectAllMenus" resultType="egovframework.admin.menu.MenuMapper$MenuRow">
+        SELECT menu_id, parent_menu_id, menu_cd, menu_nm, menu_type_cd, menu_url, icon, depth, sort_ord, use_yn
+        FROM tb_menu
+        ORDER BY depth, sort_ord, menu_id
+    </select>
+</mapper>

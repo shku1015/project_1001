@@ -36,22 +36,31 @@
 | 목적 | 명령 |
 |---|---|
 | **작업 완료 전 검증 (필수)** | `./verify.sh` (전체) / `./verify.sh api` / `./verify.sh backend` / `./verify.sh frontend` |
-| 개발용 DB | `docker compose up -d` (`.env` 필요, `.env.example` 참고) |
+| 개발용 DB | `docker compose up -d` (`.env` 필요, `.env.example` 참고. 서버 실행에는 `JWT_SECRET`, 로컬은 `COOKIE_SECURE=false`도 필요) |
 | 서버 실행 (테스트 데이터 포함) | `SPRING_PROFILES_ACTIVE=local ./mvnw -pl admin-web -am spring-boot:run` |
 | React 개발 서버 | `cd admin-react && npm run dev` |
 
 - 백엔드 테스트는 Testcontainers로 실제 PostgreSQL을 띄운다. Docker가 필요하다. H2는 쓰지 않는다.
 - 추가 Maven 옵션은 `MVN_ARGS` 환경 변수로 `verify.sh`에 넘긴다.
 
+## 코드 작성 규칙
+
+- 컨트롤러(api, ssr 패키지)의 모든 메서드에 `@RequirePermission(menu, action)`, `@LoginOnly`, `@PublicEndpoint` 중 하나를 붙인다. 없으면 기본 거부(403)된다.
+- 업무 규칙 위반은 Service에서 `BusinessException(ErrorCode)`를 던진다. 입력 칸 오류는 `BusinessException.field(...)`.
+- 감사로그는 Service에서 `AuditLogService.record(...)`를 같은 트랜잭션 안에서 직접 호출한다. 개인정보는 마스킹한 값, 비밀번호·토큰은 넣지 않는다.
+- 역할·권한·메뉴·관리자 상태를 바꾸면 `AdminAuthInfoService.evict/evictAll`로 권한 캐시를 비운다.
+
 ## 테스트 작성 규칙
 
 - 통합 테스트는 `@IntegrationTest`(실제 PostgreSQL + 운영 필수 데이터 + MockMvc)를 붙인다.
+  로그인이 필요하면 `@IntegrationTestWithData`(테스트 관리자 t_* 포함)와 `AuthTestSupport.login(mockMvc, "t_member")`를 쓴다.
+  잠금·비밀번호 변경처럼 데이터를 바꾸는 테스트는 t_* 대신 `AuthTestSupport.createAdmin(...)`으로 만든 계정을 쓴다.
 - API 테스트는 응답을 `OpenApiContract.assertValid(result)`로 `api/openapi.yaml`과 대조한다 (계약 테스트).
 - 오류 코드를 추가하면 `ErrorCode`(Java)와 `openapi.yaml`의 `ErrorCode` enum을 함께 고친다 (`ErrorCodeSpecTest`가 확인).
 - 권한 매트릭스를 바꾸면 `docs/02-access-model.md` 6절, `docs/data/permission-matrix.csv`, Flyway 데이터를 함께 고친다 (`SeedDataTest`가 확인).
 - DB 구조를 바꿀 때는 기존 Flyway 파일을 고치지 않고 새 버전(`V4__...`)을 추가한다.
 
-## 현재 단계: 개발 M1 (골격·하네스 기반 완료, 인증 진행 전)
+## 현재 단계: 개발 M1 (골격·하네스 기반·인증 서버 완료, 세 프론트 로그인 화면 진행 전)
 
 - 개발은 [docs/08-architecture.md](docs/08-architecture.md) 9절의 개발 순서를 따른다.
 - API는 명세 우선이다. API를 추가·변경할 때는 `api/openapi.yaml`을 먼저 고치고, 서버는 계약 테스트로, React는 생성 타입으로 맞춘다 ([docs/adr/0020-openapi-spec-first.md](docs/adr/0020-openapi-spec-first.md)).

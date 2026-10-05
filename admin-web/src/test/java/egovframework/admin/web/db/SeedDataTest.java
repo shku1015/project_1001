@@ -93,7 +93,7 @@ class SeedDataTest {
 
     @Test
     void 테스트_데이터는_기본_프로필에_들어가지_않는다() {
-        assertThat(jdbc.queryForObject("SELECT count(*) FROM tb_admin", Integer.class)).isZero();
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM tb_admin WHERE login_id LIKE 't\\_%'", Integer.class)).isZero();
         assertThat(jdbc.queryForObject("SELECT count(*) FROM tb_user", Integer.class)).isZero();
     }
 }

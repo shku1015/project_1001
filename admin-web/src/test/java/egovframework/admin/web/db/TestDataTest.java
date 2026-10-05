@@ -4,23 +4,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-import egovframework.admin.web.TestcontainersConfig;
+import egovframework.admin.web.support.AuthTestSupport;
+import egovframework.admin.web.support.IntegrationTestWithData;
 
 /**
  * 개발용 테스트 데이터(db/testdata/R__testdata.sql)가 오류 없이 들어가고, docs/03-initial-data.md 3절과 맞는지 확인한다.
  */
-@SpringBootTest(properties = {
-        "spring.flyway.locations=classpath:db/migration,classpath:db/testdata",
-        "spring.flyway.placeholders.testAdminPassword=" + TestDataTest.PASSWORD
-})
-@Import(TestcontainersConfig.class)
+@IntegrationTestWithData
 class TestDataTest {
 
-    static final String PASSWORD = "test-only-password";
+    static final String PASSWORD = AuthTestSupport.TEST_PASSWORD;
 
     @Autowired
     private JdbcTemplate jdbc;
@@ -31,7 +26,7 @@ class TestDataTest {
 
     @Test
     void 테스트_관리자와_역할() {
-        assertThat(count("SELECT count(*) FROM tb_admin")).isEqualTo(9);
+        assertThat(count("SELECT count(*) FROM tb_admin WHERE login_id LIKE 't\\_%'")).isEqualTo(9);
         assertThat(count("SELECT count(*) FROM tb_admin_role ar JOIN tb_admin a USING (admin_id) WHERE a.login_id = 't_multi'"))
                 .isEqualTo(2);
         assertThat(count("SELECT count(*) FROM tb_admin_role ar JOIN tb_admin a USING (admin_id) WHERE a.login_id = 't_norole'"))
