@@ -1,0 +1,54 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./verify.sh)",
+      "Bash(./verify.sh api)",
+      "Bash(./verify.sh backend)",
+      "Bash(./verify.sh frontend)",
+      "Bash(./mvnw -B -ntp *)",
+      "Bash(./mvnw -q *)",
+      "Bash(git status)",
+      "Bash(git status --short)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git show *)",
+      "Bash(git branch *)",
+      "Bash(git switch *)",
+      "Bash(git fetch *)",
+      "Bash(git add *)",
+      "Bash(git restore *)",
+      "Bash(git stash *)",
+      "Bash(gh pr view *)",
+      "Bash(gh pr list *)",
+      "Bash(gh pr checks *)",
+      "Bash(gh pr diff *)",
+      "Bash(gh run view *)",
+      "Bash(gh run list *)",
+      "Bash(gh api repos/shku1015/project_1001/*)",
+      "Bash(docker compose up -d)",
+      "Bash(docker compose ps)",
+      "Bash(docker compose logs *)",
+      "Bash(docker ps)",
+      "Bash(npm run lint)",
+      "Bash(npm run typecheck)",
+      "Bash(npm test)",
+      "Bash(npm run build)",
+      "Bash(npm run gen:api)",
+      "Bash(npm ci *)",
+      "Bash(npx --yes @redocly/cli@2.57.0 lint)",
+      "Bash(npx --yes openapi-typescript@7.13.0 *)",
+      "Read(//home/shku/dev/project_1001/**)",
+      "Read(//tmp/**)"
+    ],
+    "ask": [
+      "Bash(git push *)",
+      "Bash(gh pr create *)",
+      "Bash(gh pr merge *)",
+      "Bash(gh api -X *)",
+      "Bash(docker compose down *)"
+    ],
+    "deny": [
+      "Read(//home/shku/dev/project_1001/.env)"
+    ]
+  }
+}
