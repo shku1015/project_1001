@@ -83,6 +83,9 @@
     },
     me: function () { return request('GET', '/auth/me'); },
     updateMe: function (body) { return request('PUT', '/me', body); },
+    post: function (path, body) { return request('POST', path, body); },
+    put: function (path, body) { return request('PUT', path, body); },
+    del: function (path, body) { return request('DELETE', path, body); },
     async changePassword(currentPassword, newPassword) {
       var token = await request('PUT', '/me/password', { currentPassword: currentPassword, newPassword: newPassword });
       accessToken = token.accessToken;

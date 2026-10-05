@@ -4,6 +4,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,10 +13,13 @@ import egovframework.admin.common.ErrorCode;
 
 /**
  * 공통 코드 조회 (docs/06-api-spec.md 9절). 코드 콤보와 코드명 표시에 쓴다.
+ * 자주 읽고 거의 안 바뀌므로 캐시한다 (BR-07). 코드가 바뀌면 {@link CodeAdminService}가 캐시를 비운다.
  */
 @Service
 @Transactional(readOnly = true)
 public class CodeService {
+
+    public static final String CACHE = "codes";
 
     private final CodeMapper codeMapper;
 
@@ -23,6 +27,7 @@ public class CodeService {
         this.codeMapper = codeMapper;
     }
 
+    @Cacheable(cacheNames = CACHE, key = "#groupCd + ':' + #includeUnused")
     public List<CodeItem> getCodes(String groupCd, boolean includeUnused) {
         if (!codeMapper.existsGroup(groupCd)) {
             throw new BusinessException(ErrorCode.NOT_FOUND, "코드 그룹이 없습니다: " + groupCd);

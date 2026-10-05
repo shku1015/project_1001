@@ -44,4 +44,9 @@ public class JspPageController {
     public String me() {
         return "jsp/me";
     }
+
+    @GetMapping("/jsp/codes")
+    public String codes() {
+        return "jsp/code";
+    }
 }

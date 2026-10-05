@@ -18,6 +18,8 @@ tags:
     description: 로그인·토큰·내 정보 (docs/06-api/00-auth.md)
   - name: common
     description: 여러 화면에서 쓰는 조회 API (docs/06-api-spec.md 9절)
+  - name: code
+    description: 코드관리 (docs/06-api/04-code.md)
 
 paths:
   /auth/token:
@@ -242,6 +244,203 @@ paths:
         '500':
           $ref: '#/components/responses/InternalError'
 
+  /code-groups:
+    get:
+      tags: [code]
+      operationId: listCodeGroups
+      summary: 그룹코드 목록 (SCR-COD-01 왼쪽, 페이징 없음)
+      parameters:
+        - name: keyword
+          in: query
+          description: 그룹코드 또는 그룹코드명 부분 일치
+          schema:
+            type: string
+        - name: useYn
+          in: query
+          schema:
+            $ref: '#/components/schemas/YnFlag'
+      responses:
+        '200':
+          description: 그룹코드 오름차순
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CodeGroupListResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '500': { $ref: '#/components/responses/InternalError' }
+    post:
+      tags: [code]
+      operationId: createCodeGroup
+      summary: 그룹코드 등록 (COD-02)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CodeGroupRequest'
+      responses:
+        '201':
+          description: 등록 완료
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmptyResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /code-groups/{groupCd}:
+    parameters:
+      - $ref: '#/components/parameters/GroupCd'
+    get:
+      tags: [code]
+      operationId: getCodeGroup
+      summary: 그룹코드 상세 (수정 팝업)
+      responses:
+        '200':
+          description: 그룹코드 상세
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CodeGroupResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/InternalError' }
+    put:
+      tags: [code]
+      operationId: updateCodeGroup
+      summary: 그룹코드 수정 (COD-03). groupCd는 무시, 시스템 코드는 useYn 무시
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CodeGroupUpdateRequest'
+      responses:
+        '200':
+          description: 수정 완료
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmptyResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+    delete:
+      tags: [code]
+      operationId: deleteCodeGroup
+      summary: 그룹코드 삭제 (COD-04). 시스템 코드·상세코드 있으면 불가
+      responses:
+        '200':
+          description: 삭제 완료
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmptyResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /code-groups/{groupCd}/codes:
+    parameters:
+      - $ref: '#/components/parameters/GroupCd'
+    get:
+      tags: [code]
+      operationId: listCodes
+      summary: 상세코드 목록 (COD-05, 정렬 순서 오름차순)
+      responses:
+        '200':
+          description: 상세코드 목록
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CodeDetailListResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/InternalError' }
+    post:
+      tags: [code]
+      operationId: createCode
+      summary: 상세코드 등록 (COD-06)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CodeDetailRequest'
+      responses:
+        '201':
+          description: 등록 완료
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmptyResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /code-groups/{groupCd}/codes/{code}:
+    parameters:
+      - $ref: '#/components/parameters/GroupCd'
+      - name: code
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: '^[A-Z0-9_]+$'
+    put:
+      tags: [code]
+      operationId: updateCode
+      summary: 상세코드 수정 (COD-07). code는 무시
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CodeDetailUpdateRequest'
+      responses:
+        '200':
+          description: 수정 완료
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmptyResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+    delete:
+      tags: [code]
+      operationId: deleteCode
+      summary: 상세코드 삭제 (COD-08). 시스템 코드 그룹이면 불가. 실제 삭제
+      responses:
+        '200':
+          description: 삭제 완료
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmptyResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
 components:
   securitySchemes:
     bearerAuth:
@@ -251,6 +450,13 @@ components:
       description: Access Token (docs/04-features/09-auth.md 1.1)
 
   parameters:
+    GroupCd:
+      name: groupCd
+      in: path
+      required: true
+      schema:
+        type: string
+        pattern: '^[A-Z0-9_]+$'
     Page:
       name: page
       in: query
@@ -651,6 +857,118 @@ components:
     # ---------------------------------------------------------------
     # 공통 코드
     # ---------------------------------------------------------------
+    # ---------------------------------------------------------------
+    # 코드관리 (docs/06-api/04-code.md)
+    # ---------------------------------------------------------------
+    CodeGroupSummary:
+      type: object
+      required: [groupCd, groupNm, codeCnt, systemYn, useYn]
+      properties:
+        groupCd: { type: string }
+        groupNm: { type: string }
+        codeCnt: { type: integer, minimum: 0 }
+        systemYn: { $ref: '#/components/schemas/YnFlag' }
+        useYn: { $ref: '#/components/schemas/YnFlag' }
+
+    CodeGroupListResponse:
+      type: object
+      required: [success, data, error]
+      properties:
+        success: { type: boolean, enum: [true] }
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/CodeGroupSummary' }
+        error: { $ref: '#/components/schemas/NullError' }
+
+    CodeGroup:
+      type: object
+      required: [groupCd, groupNm, description, systemYn, useYn, modDt]
+      properties:
+        groupCd: { type: string }
+        groupNm: { type: string }
+        description: { type: string, nullable: true }
+        systemYn: { $ref: '#/components/schemas/YnFlag' }
+        useYn: { $ref: '#/components/schemas/YnFlag' }
+        modDt: { $ref: '#/components/schemas/DateTime' }
+
+    CodeGroupResponse:
+      type: object
+      required: [success, data, error]
+      properties:
+        success: { type: boolean, enum: [true] }
+        data: { $ref: '#/components/schemas/CodeGroup' }
+        error: { $ref: '#/components/schemas/NullError' }
+
+    CodeGroupRequest:
+      type: object
+      required: [groupCd, groupNm, useYn]
+      additionalProperties: false
+      properties:
+        groupCd:
+          type: string
+          pattern: '^[A-Z0-9_]+$'
+          maxLength: 50
+        groupNm: { type: string, minLength: 1, maxLength: 100 }
+        description: { type: string, nullable: true, maxLength: 500 }
+        useYn: { $ref: '#/components/schemas/YnFlag' }
+
+    CodeGroupUpdateRequest:
+      type: object
+      required: [groupNm, useYn, modDt]
+      additionalProperties: false
+      properties:
+        groupNm: { type: string, minLength: 1, maxLength: 100 }
+        description: { type: string, nullable: true, maxLength: 500 }
+        useYn: { $ref: '#/components/schemas/YnFlag' }
+        modDt: { $ref: '#/components/schemas/DateTime' }
+
+    CodeDetail:
+      type: object
+      required: [groupCd, code, codeNm, sortOrd, description, useYn, modDt]
+      properties:
+        groupCd: { type: string }
+        code: { type: string }
+        codeNm: { type: string }
+        sortOrd: { type: integer, minimum: 0 }
+        description: { type: string, nullable: true }
+        useYn: { $ref: '#/components/schemas/YnFlag' }
+        modDt: { $ref: '#/components/schemas/DateTime' }
+
+    CodeDetailListResponse:
+      type: object
+      required: [success, data, error]
+      properties:
+        success: { type: boolean, enum: [true] }
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/CodeDetail' }
+        error: { $ref: '#/components/schemas/NullError' }
+
+    CodeDetailRequest:
+      type: object
+      required: [code, codeNm, sortOrd, useYn]
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+          pattern: '^[A-Z0-9_]+$'
+          maxLength: 50
+        codeNm: { type: string, minLength: 1, maxLength: 100 }
+        sortOrd: { type: integer, minimum: 0 }
+        description: { type: string, nullable: true, maxLength: 500 }
+        useYn: { $ref: '#/components/schemas/YnFlag' }
+
+    CodeDetailUpdateRequest:
+      type: object
+      required: [codeNm, sortOrd, useYn, modDt]
+      additionalProperties: false
+      properties:
+        codeNm: { type: string, minLength: 1, maxLength: 100 }
+        sortOrd: { type: integer, minimum: 0 }
+        description: { type: string, nullable: true, maxLength: 500 }
+        useYn: { $ref: '#/components/schemas/YnFlag' }
+        modDt: { $ref: '#/components/schemas/DateTime' }
+
     CodeItem:
       type: object
       required: [code, codeNm, sortOrd, useYn]
