@@ -67,6 +67,9 @@
                     <c:if test="${not empty notice}">
                         <div class="alert alert-success" role="status"><c:out value="${notice}"/></div>
                     </c:if>
+                    <c:if test="${not empty error}">
+                        <div class="alert alert-danger" role="alert"><c:out value="${error}"/></div>
+                    </c:if>
                 </div>
                 <jsp:doBody/>
             </div>

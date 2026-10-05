@@ -3,7 +3,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router'
 import '@tabler/core/dist/css/tabler.min.css'
-import '@tabler/core/dist/js/tabler.min.js'
+import 'bootstrap'  // 드롭다운·모달 등 상호작용 (Tabler JS는 ESM에서 window.bootstrap을 노출하지 않는다)
 import './index.css'
 import { App } from './App'
 import { AuthProvider } from './auth/AuthProvider'

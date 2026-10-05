@@ -132,6 +132,86 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/code-groups": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 그룹코드 목록 (SCR-COD-01 왼쪽, 페이징 없음) */
+        get: operations["listCodeGroups"];
+        put?: never;
+        /** 그룹코드 등록 (COD-02) */
+        post: operations["createCodeGroup"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/code-groups/{groupCd}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                groupCd: components["parameters"]["GroupCd"];
+            };
+            cookie?: never;
+        };
+        /** 그룹코드 상세 (수정 팝업) */
+        get: operations["getCodeGroup"];
+        /** 그룹코드 수정 (COD-03). groupCd는 무시, 시스템 코드는 useYn 무시 */
+        put: operations["updateCodeGroup"];
+        post?: never;
+        /** 그룹코드 삭제 (COD-04). 시스템 코드·상세코드 있으면 불가 */
+        delete: operations["deleteCodeGroup"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/code-groups/{groupCd}/codes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                groupCd: components["parameters"]["GroupCd"];
+            };
+            cookie?: never;
+        };
+        /** 상세코드 목록 (COD-05, 정렬 순서 오름차순) */
+        get: operations["listCodes"];
+        put?: never;
+        /** 상세코드 등록 (COD-06) */
+        post: operations["createCode"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/code-groups/{groupCd}/codes/{code}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                groupCd: components["parameters"]["GroupCd"];
+                code: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /** 상세코드 수정 (COD-07). code는 무시 */
+        put: operations["updateCode"];
+        post?: never;
+        /** 상세코드 삭제 (COD-08). 시스템 코드 그룹이면 불가. 실제 삭제 */
+        delete: operations["deleteCode"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -267,6 +347,74 @@ export interface components {
              */
             newPassword: string;
         };
+        CodeGroupSummary: {
+            groupCd: string;
+            groupNm: string;
+            codeCnt: number;
+            systemYn: components["schemas"]["YnFlag"];
+            useYn: components["schemas"]["YnFlag"];
+        };
+        CodeGroupListResponse: {
+            /** @enum {boolean} */
+            success: true;
+            data: components["schemas"]["CodeGroupSummary"][];
+            error: components["schemas"]["NullError"];
+        };
+        CodeGroup: {
+            groupCd: string;
+            groupNm: string;
+            description: string | null;
+            systemYn: components["schemas"]["YnFlag"];
+            useYn: components["schemas"]["YnFlag"];
+            modDt: components["schemas"]["DateTime"];
+        };
+        CodeGroupResponse: {
+            /** @enum {boolean} */
+            success: true;
+            data: components["schemas"]["CodeGroup"];
+            error: components["schemas"]["NullError"];
+        };
+        CodeGroupRequest: {
+            groupCd: string;
+            groupNm: string;
+            description?: string | null;
+            useYn: components["schemas"]["YnFlag"];
+        };
+        CodeGroupUpdateRequest: {
+            groupNm: string;
+            description?: string | null;
+            useYn: components["schemas"]["YnFlag"];
+            modDt: components["schemas"]["DateTime"];
+        };
+        CodeDetail: {
+            groupCd: string;
+            code: string;
+            codeNm: string;
+            sortOrd: number;
+            description: string | null;
+            useYn: components["schemas"]["YnFlag"];
+            modDt: components["schemas"]["DateTime"];
+        };
+        CodeDetailListResponse: {
+            /** @enum {boolean} */
+            success: true;
+            data: components["schemas"]["CodeDetail"][];
+            error: components["schemas"]["NullError"];
+        };
+        CodeDetailRequest: {
+            code: string;
+            codeNm: string;
+            sortOrd: number;
+            description?: string | null;
+            useYn: components["schemas"]["YnFlag"];
+        };
+        CodeDetailUpdateRequest: {
+            codeNm: string;
+            sortOrd: number;
+            description?: string | null;
+            useYn: components["schemas"]["YnFlag"];
+            modDt: components["schemas"]["DateTime"];
+        };
         CodeItem: {
             /** @example SUSPENDED */
             code: string;
@@ -348,6 +496,7 @@ export interface components {
         };
     };
     parameters: {
+        GroupCd: string;
         /** @description 페이지 번호 (1부터) */
         Page: number;
         /** @description 페이지 크기 */
@@ -596,6 +745,266 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    listCodeGroups: {
+        parameters: {
+            query?: {
+                /** @description 그룹코드 또는 그룹코드명 부분 일치 */
+                keyword?: string;
+                useYn?: components["schemas"]["YnFlag"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 그룹코드 오름차순 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CodeGroupListResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    createCodeGroup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CodeGroupRequest"];
+            };
+        };
+        responses: {
+            /** @description 등록 완료 */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmptyResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    getCodeGroup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                groupCd: components["parameters"]["GroupCd"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 그룹코드 상세 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CodeGroupResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    updateCodeGroup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                groupCd: components["parameters"]["GroupCd"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CodeGroupUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description 수정 완료 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmptyResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    deleteCodeGroup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                groupCd: components["parameters"]["GroupCd"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 삭제 완료 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmptyResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    listCodes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                groupCd: components["parameters"]["GroupCd"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 상세코드 목록 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CodeDetailListResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    createCode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                groupCd: components["parameters"]["GroupCd"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CodeDetailRequest"];
+            };
+        };
+        responses: {
+            /** @description 등록 완료 */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmptyResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    updateCode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                groupCd: components["parameters"]["GroupCd"];
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CodeDetailUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description 수정 완료 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmptyResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    deleteCode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                groupCd: components["parameters"]["GroupCd"];
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 삭제 완료 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmptyResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
             500: components["responses"]["InternalError"];
         };
     };

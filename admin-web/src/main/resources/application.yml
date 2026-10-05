@@ -28,7 +28,7 @@ spring:
       initialize-schema: never
   cache:
     type: caffeine
-    cache-names: adminAuthInfo
+    cache-names: adminAuthInfo,codes
     caffeine:
       spec: maximumSize=1000,expireAfterWrite=10m
 

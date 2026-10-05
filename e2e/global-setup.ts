@@ -37,6 +37,9 @@ export default async function globalSetup() {
     ]) {
       await client.query(sql, ids)
     }
+    // E2E가 만든 코드관리 데이터 정리 (반복 실행 안전)
+    await client.query("DELETE FROM tb_code WHERE group_cd LIKE 'E2E\\_%'")
+    await client.query("DELETE FROM tb_code_group WHERE group_cd LIKE 'E2E\\_%'")
     for (const front of FRONTS) {
       // 임시 비밀번호 계정 (비밀번호 변경 시나리오), 내 정보 수정 계정
       await createAdmin(client, `e2e_temp_${front}`, password, true)
