@@ -73,7 +73,7 @@ flowchart LR
 | 빌드 | Maven 멀티 모듈 | 전자정부프레임워크 기본 빌드 도구 |
 | DB 접근 | MyBatis | 전자정부프레임워크 표준 |
 | DB | PostgreSQL | |
-| DB 변경 관리 | Flyway | `db/migration`: V1 확장, V2 테이블, V3 운영 필수 데이터 / `db/testdata`: 개발용 테스트 데이터(`R__`, `local` 프로필만) |
+| DB 변경 관리 | Flyway | `db/migration`: V1 확장, V2 테이블, V3 운영 필수 데이터, V4 Spring Session 테이블 / `db/testdata`: 개발용 테스트 데이터(`R__`, `local` 프로필만) |
 | 보안 | Spring Security | 경로별 필터 체인 2개 (토큰 / 세션) |
 | JWT | jjwt | Access Token 생성·검증 |
 | 세션 저장 | Spring Session JDBC | 세션을 DB에 저장해 관리자별로 찾아 끊을 수 있게 함 (동시 로그인 금지, 사용중지 시 강제 로그아웃) |
@@ -234,12 +234,13 @@ sequenceDiagram
 
 | 항목 | 방식 |
 |---|---|
-| 권한 확인 | 컨트롤러 메서드에 `@RequirePermission(menu, action)`. 인터셉터가 공통 평가기(`admin-core`)로 확인. 게시글처럼 메뉴가 여럿이면 `menu = {"POST", "POST_{boardCd}"}` ([02-access-model.md](02-access-model.md) 4절) |
+| 권한 확인 | `PermissionInterceptor`(/api/**, /ssr/**)가 컨트롤러 메서드의 표시를 본다. `@RequirePermission(menu, action)`: 메뉴 × 액션 권한, 여러 메뉴면 하나라도 있으면 통과(`menu = {"POST", "POST_{boardCd}"}`). `@LoginOnly`: 로그인만. `@PublicEndpoint`: 공개. **표시가 없으면 기본 거부**. 임시 비밀번호 상태에서는 `@AllowTempPassword`가 있는 메서드만 쓸 수 있다 ([02-access-model.md](02-access-model.md) 4절) |
+| 인증 상태 확인 | 요청마다 `AdminAuthInfoService`(캐시)로 관리자 상태·임시 비밀번호·최종 권한을 확인한다. 토큰·세션에는 권한을 넣지 않는다 |
 | 업무 오류 | Service가 `BusinessException(ErrorCode)`을 던진다. API는 공통 핸들러가 실패 JSON으로, SSR은 화면 메시지로 바꾼다. 오류 코드는 [06-api-spec.md](06-api-spec.md) 6절 |
 | 입력 검증 | 요청 객체에 Bean Validation. 업무 규칙 검증은 Service에서. API·SSR이 같은 검증 객체를 쓴다 |
 | 감사로그 | Service에서 `AuditLogService.record(...)`를 직접 호출한다 (AOP로 숨기지 않음. 무엇을 기록하는지 코드에서 바로 보이게). 원래 작업과 같은 트랜잭션 |
 | 마스킹 | Service가 응답 객체를 만들 때 `MaskingService`로 적용. 마스킹 설정은 캐시 |
-| 동시 수정 | 수정 SQL의 조건에 `MOD_DT = #{modDt}`를 넣고, 바뀐 행이 0이면 `CONFLICT_MODIFIED` |
+| 동시 수정 | 수정 SQL의 조건에 `date_trunc('second', mod_dt) = #{modDt}`를 넣고, 바뀐 행이 0이면 `CONFLICT_MODIFIED`. API 일시가 초 단위이므로 초 단위로 비교한다 |
 | 트랜잭션 | Service 메서드 단위 (`@Transactional`) |
 | 페이징 | 공통 페이징 요청·응답 객체. PostgreSQL `LIMIT / OFFSET` + 건수 조회 |
 | 정렬 | 허용 칼럼 목록으로 검증 후 `ORDER BY`에 넣는다 (NF-WS-07) |

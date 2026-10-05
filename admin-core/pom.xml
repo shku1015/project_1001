@@ -57,6 +57,16 @@
                 </exclusion>
             </exclusions>
         </dependency>
+        <!-- 감사로그 변경 전·후 데이터(JSON) -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+        <!-- 비밀번호 BCrypt (NF-PW-03) -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-crypto</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>

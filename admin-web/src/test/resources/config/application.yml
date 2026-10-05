@@ -1,0 +1,10 @@
+# 테스트 전용 설정 (main의 application.yml 위에 덮어쓴다). 실제 비밀값이 아니다.
+app:
+  auth:
+    jwt-secret: test-only-jwt-secret-0123456789-abcdefghij
+    cookie-secure: false
+server:
+  servlet:
+    session:
+      cookie:
+        secure: false

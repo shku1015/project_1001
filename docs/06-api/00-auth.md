@@ -96,4 +96,5 @@
 
 - 새 비밀번호 확인 값은 프론트에서만 비교하고 보내지 않는다.
 - 오류: 400 `VALIDATION_ERROR` (현재 비밀번호 불일치는 `currentPassword` 필드 오류, 규칙 위반은 `newPassword` 필드 오류)
-- 성공하면 다른 곳의 로그인(Refresh Token)을 모두 폐기한다. 현재 로그인은 유지한다.
+- 성공하면 이 관리자의 로그인(세션·Refresh Token)을 모두 끊고, 현재 로그인을 이어가도록 **새 Access Token과 새 Refresh Token 쿠키**를 준다. 응답은 API-AUTH-01과 같은 형식이다.
+- ③ JSP SSR(`POST /ssr/password`)은 현재 세션만 남기고 다른 로그인을 끊는다.

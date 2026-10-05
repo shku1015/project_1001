@@ -4,25 +4,39 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import egovframework.admin.web.support.IntegrationTest;
+import egovframework.admin.web.support.AuthTestSupport;
+import egovframework.admin.web.support.IntegrationTestWithData;
 import egovframework.admin.web.support.OpenApiContract;
 
 /**
  * 공통 코드 API: 동작과 함께 응답이 api/openapi.yaml과 맞는지(계약) 확인한다.
  */
-@IntegrationTest
+@IntegrationTestWithData
 class CommonCodeApiContractTest {
 
-    // TODO(M1 인증): 실제 Access Token으로 바꾼다. 지금은 명세의 인증 헤더 요구만 맞춘다.
-    private static final String AUTH = "Bearer test-token";
+    private String AUTH;
 
     @Autowired
     private MockMvc mockMvc;
+
+    @BeforeEach
+    void login() throws Exception {
+        AUTH = AuthTestSupport.login(mockMvc, "t_viewer").bearer();
+    }
+
+    @Test
+    void 로그인하지_않으면_401() throws Exception {
+        MvcResult result = mockMvc.perform(get("/api/v1/common/codes/USER_STATUS"))
+                .andExpect(status().isUnauthorized())
+                .andReturn();
+        OpenApiContract.assertValid(result);
+    }
 
     @Test
     void 그룹코드의_상세코드를_정렬순서대로_준다() throws Exception {
