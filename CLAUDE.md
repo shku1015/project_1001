@@ -33,6 +33,7 @@
 | `api/openapi.yaml` | API 명세 정본. 바꾸면 `cd admin-react && npm run gen:api`로 타입 재생성 |
 | `docs/` | 기획 문서, PRD, ADR |
 | `docs/data/` | 기계 판독용 명세 데이터 (권한 매트릭스 CSV 등). 원본 표를 바꾸면 함께 바꾼다 |
+| `docs/traceability.md` | 기능 모듈별 구현 현황(서버·세 프론트·테스트). 기능을 구현하면 갱신한다 |
 
 ## 명령
 
@@ -68,7 +69,12 @@
 - DB 구조를 바꿀 때는 기존 Flyway 파일을 고치지 않고 새 버전(`V5__...`)을 추가한다.
 - 화면 시나리오는 `e2e/tests/`에 한 번만 쓰고 세 프론트에서 실행한다 (`test.info().project.metadata.prefix`).
 
-## 현재 단계: 개발 M1 마무리 (인증 서버, 세 프론트 공통 레이아웃·로그인·홈·비밀번호·내 정보, E2E)
+## 기능 구현
+
+- 기능 모듈 하나를 구현할 때는 `/implement-feature <기능 ID 접두어>` 명령의 순서(명세→DB→Service→API→세 프론트→테스트→추적표)를 따른다.
+- 진행 현황은 [docs/traceability.md](docs/traceability.md)에서 확인하고, 구현 후 갱신한다.
+
+## 현재 단계: M1 완료, M2(코드관리·메뉴관리) 시작 전
 
 - 개발은 [docs/08-architecture.md](docs/08-architecture.md) 9절의 개발 순서를 따른다.
 - API는 명세 우선이다. API를 추가·변경할 때는 `api/openapi.yaml`을 먼저 고치고, 서버는 계약 테스트로, React는 생성 타입으로 맞춘다 ([docs/adr/0020-openapi-spec-first.md](docs/adr/0020-openapi-spec-first.md)).
