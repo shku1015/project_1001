@@ -119,6 +119,13 @@
             <artifactId>spring-boot-starter-tomcat</artifactId>
             <scope>provided</scope>
         </dependency>
+        <!-- UI: Bootstrap 5 + Tabler (ADR-0013). ②③ JSP는 /webjars/tabler__core/{버전}/dist/ 에서 받는다.
+             ① React는 npm @tabler/core 같은 버전을 쓴다 -->
+        <dependency>
+            <groupId>org.webjars.npm</groupId>
+            <artifactId>tabler__core</artifactId>
+            <version>${tabler.version}</version>
+        </dependency>
 
         <!-- 테스트: 실제 PostgreSQL 컨테이너 (ADR-0019) -->
         <dependency>

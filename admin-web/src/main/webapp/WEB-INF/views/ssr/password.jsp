@@ -1,30 +1,32 @@
 <%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
-<%-- SCR-AUTH-02 비밀번호 변경 (③ JSP SSR). 디자인(Tabler)은 화면 단계에서 입힌다. --%>
+<%@ taglib prefix="ui" tagdir="/WEB-INF/tags" %>
+<%-- SCR-AUTH-02 비밀번호 변경 (③ JSP SSR).
+     임시 비밀번호면 헤더·메뉴 없이 보여 주고(로그아웃만 가능), 아니면 일반 레이아웃 안에 보여 준다 --%>
+<c:choose>
+    <c:when test="${me.pwdChangeRequired()}">
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <title>비밀번호 변경 - 관리자 서비스</title>
+    <ui:head title="비밀번호 변경"/>
 </head>
 <body>
-<h1>비밀번호 변경</h1>
-<c:if test="${me.pwdChangeRequired()}">
-    <p role="status">임시 비밀번호로 로그인했습니다. 비밀번호를 바꿔야 다른 화면을 쓸 수 있습니다.</p>
-</c:if>
-<form method="post" action="<c:url value='/ssr/password'/>">
-    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
-    <p><label>현재 비밀번호 <input type="password" name="currentPassword" required></label></p>
-    <p><label>새 비밀번호 <input type="password" name="newPassword" required maxlength="20"></label></p>
-    <p><label>새 비밀번호 확인 <input type="password" name="newPasswordConfirm" required maxlength="20"></label></p>
-    <c:if test="${not empty fieldError}"><p role="alert" class="field-error"><c:out value="${fieldError}"/></p></c:if>
-    <button type="submit">변경</button>
-</form>
-<c:if test="${me.pwdChangeRequired()}">
-    <form method="post" action="<c:url value='/ssr/logout'/>">
-        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
-        <button type="submit">로그아웃</button>
-    </form>
-</c:if>
+<div class="page page-center login-page">
+    <div class="container container-tight py-4">
+        <h2 class="page-title mb-3">비밀번호 변경</h2>
+        <%@ include file="password-form.jspf" %>
+        <form method="post" action="<c:url value='/ssr/logout'/>" class="mt-3 text-center">
+            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+            <button type="submit" class="btn btn-link">로그아웃</button>
+        </form>
+    </div>
+</div>
 </body>
 </html>
+    </c:when>
+    <c:otherwise>
+        <ui:layout title="비밀번호 변경" mode="ssr">
+            <%@ include file="password-form.jspf" %>
+        </ui:layout>
+    </c:otherwise>
+</c:choose>

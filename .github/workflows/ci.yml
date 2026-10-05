@@ -1,5 +1,5 @@
 # CI (ADR-0018). PR과 main push마다 실행한다.
-# e2e 작업은 화면이 생기는 단계에서 추가한다 (docs/08-architecture.md 8.2).
+# 작업: api-spec(명세), backend(서버 테스트), frontend(React), e2e(세 프론트 공통 시나리오) (docs/08-architecture.md 8.2)
 name: CI
 
 on:
@@ -54,3 +54,58 @@ jobs:
           cache-dependency-path: admin-react/package-lock.json
       - name: lint · 타입 검사 · 테스트 · 빌드
         run: ./verify.sh frontend
+
+  e2e:
+    name: e2e
+    needs: [backend, frontend]
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: admin
+          POSTGRES_USER: admin
+          POSTGRES_PASSWORD: ci-db-password
+          TZ: Asia/Seoul
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U admin -d admin"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    env:
+      # CI 전용 값이다. 실제 비밀값이 아니다.
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_NAME: admin
+      DB_USERNAME: admin
+      DB_PASSWORD: ci-db-password
+      JWT_SECRET: ci-only-jwt-secret-0123456789-abcdefghijkl
+      TEST_ADMIN_PASSWORD: ci-test-admin-password
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: |
+            admin-react/package-lock.json
+            e2e/package-lock.json
+      - name: Playwright 브라우저 설치
+        working-directory: e2e
+        run: npm ci --no-audit --no-fund && npx playwright install --with-deps chromium
+      - name: 세 프론트 E2E (/react, /jsp, /ssr)
+        run: ./verify.sh e2e
+      - name: 실패 시 결과 보관 (스크린샷·trace·서버 로그)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-results
+          path: |
+            e2e/playwright-report
+            e2e/test-results
+            logs/e2e-server.log

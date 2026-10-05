@@ -38,17 +38,60 @@ public class SsrAuthController {
 
     @GetMapping({"/ssr", "/ssr/"})
     @LoginOnly
-    public String home(@AuthenticationPrincipal AdminPrincipal principal, Model model) {
-        model.addAttribute("me", meService.getMe(principal.adminId()));
+    public String home() {
         return "ssr/home";
     }
 
     @GetMapping("/ssr/password")
     @LoginOnly
     @AllowTempPassword
-    public String passwordForm(@AuthenticationPrincipal AdminPrincipal principal, Model model) {
-        model.addAttribute("me", meService.getMe(principal.adminId()));
+    public String passwordForm() {
         return "ssr/password";
+    }
+
+    @GetMapping("/ssr/me")
+    @LoginOnly
+    public String myInfoForm() {
+        return "ssr/me";
+    }
+
+    /** SCR-MY-01 내 정보 저장. 입력 오류·동시 수정 오류는 같은 화면에 다시 보여 준다 */
+    @PostMapping("/ssr/me")
+    @LoginOnly
+    public String saveMyInfo(@AuthenticationPrincipal AdminPrincipal principal, @RequestParam String adminNm,
+                             @RequestParam String email, @RequestParam(required = false) String mobileNo,
+                             @RequestParam(required = false) String deptNm, @RequestParam String modDt,
+                             HttpServletRequest request, RedirectAttributes redirect, Model model) {
+        String error = validateMyInfo(adminNm, email, mobileNo, deptNm);
+        if (error == null) {
+            try {
+                meService.updateMyInfo(principal.adminId(), new MeService.MyInfo(adminNm.trim(), email.trim(),
+                        mobileNo, deptNm, java.time.LocalDateTime.parse(modDt)), request.getRemoteAddr());
+                redirect.addFlashAttribute("notice", "저장되었습니다");
+                return "redirect:/ssr/me";
+            } catch (BusinessException e) {
+                error = e.getFieldErrors().isEmpty() ? e.getMessage() : e.getFieldErrors().get(0).message();
+            }
+        }
+        model.addAttribute("formError", error);
+        return "ssr/me";
+    }
+
+    /** API(MeApiController)의 검증 규칙과 같다 */
+    static String validateMyInfo(String adminNm, String email, String mobileNo, String deptNm) {
+        if (adminNm == null || adminNm.isBlank() || adminNm.length() > 50) {
+            return "이름은 1~50자입니다.";
+        }
+        if (email == null || !email.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$") || email.length() > 100) {
+            return "이메일 형식을 확인하세요.";
+        }
+        if (mobileNo != null && !mobileNo.isBlank() && !mobileNo.matches("^[0-9]{10,11}$")) {
+            return "휴대폰 번호는 숫자 10~11자리입니다.";
+        }
+        if (deptNm != null && deptNm.length() > 100) {
+            return "부서는 100자 이내입니다.";
+        }
+        return null;
     }
 
     /** 다른 로그인은 끊고 현재 세션은 유지한다 */
@@ -60,7 +103,6 @@ public class SsrAuthController {
                                  @RequestParam String newPasswordConfirm, HttpServletRequest request,
                                  RedirectAttributes redirect, Model model) {
         if (!newPassword.equals(newPasswordConfirm)) {
-            model.addAttribute("me", meService.getMe(principal.adminId()));
             model.addAttribute("fieldError", "새 비밀번호 확인이 일치하지 않습니다.");
             return "ssr/password";
         }
@@ -68,7 +110,6 @@ public class SsrAuthController {
             meService.changePassword(principal.adminId(), currentPassword, newPassword,
                     request.getSession().getId(), request.getRemoteAddr());
         } catch (BusinessException e) {
-            model.addAttribute("me", meService.getMe(principal.adminId()));
             model.addAttribute("fieldError", e.getFieldErrors().isEmpty()
                     ? e.getMessage() : e.getFieldErrors().get(0).message());
             return "ssr/password";

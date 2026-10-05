@@ -104,7 +104,8 @@ class SsrAuthTest {
 
         HttpResponse<String> home = browser.get("/ssr/");
         assertThat(home.statusCode()).isEqualTo(200);
-        assertThat(home.body()).contains(loginId, "시스템관리");
+        // 홈: 내 이름(테스트전용), 왼쪽 메뉴(시스템관리자는 시스템관리·관리자관리 폴더), 바로가기
+        assertThat(home.body()).contains("테스트전용", "시스템관리", "관리자관리", "id=\"home-shortcuts\"");
         assertThat(jdbc.queryForObject("SELECT count(*) FROM spring_session WHERE principal_name = ?",
                 Integer.class, loginId)).isEqualTo(1);
         assertThat(jdbc.queryForObject("""
