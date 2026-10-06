@@ -20,6 +20,8 @@ tags:
     description: 여러 화면에서 쓰는 조회 API (docs/06-api-spec.md 9절)
   - name: code
     description: 코드관리 (docs/06-api/04-code.md)
+  - name: menu
+    description: 메뉴관리 (docs/06-api/03-menu.md)
 
 paths:
   /auth/token:
@@ -441,6 +443,190 @@ paths:
         '409': { $ref: '#/components/responses/Conflict' }
         '500': { $ref: '#/components/responses/InternalError' }
 
+  /menus/tree:
+    get:
+      tags: [menu]
+      operationId: getMenuTree
+      summary: 전체 메뉴 트리 (MNU-01). 사용 안 함 메뉴도 포함
+      responses:
+        '200':
+          description: depth, sortOrd 순서의 트리
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MenuTreeResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /menus/check-menu-cd:
+    get:
+      tags: [menu]
+      operationId: checkMenuCd
+      summary: 메뉴 코드 중복 확인
+      parameters:
+        - name: menuCd
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: '^[A-Z0-9_]+$'
+            maxLength: 50
+      responses:
+        '200':
+          description: 사용할 수 있으면 available=true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AvailabilityResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /menus:
+    post:
+      tags: [menu]
+      operationId: createMenu
+      summary: 메뉴 등록 (MNU-03). 같은 상위 메뉴의 맨 뒤 순서가 되고, 화면 메뉴는 사용 액션만큼 권한이 생긴다
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MenuCreateRequest'
+      responses:
+        '201':
+          description: 등록 완료
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MenuCreatedResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /menus/order:
+    put:
+      tags: [menu]
+      operationId: saveMenuOrder
+      summary: 순서 저장 (MNU-06). 상위 메뉴별 하위 메뉴 목록을 빠짐없이 보낸다
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MenuOrderRequest'
+      responses:
+        '200':
+          description: 저장 완료
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmptyResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /menus/{menuId}:
+    parameters:
+      - $ref: '#/components/parameters/MenuId'
+    get:
+      tags: [menu]
+      operationId: getMenu
+      summary: 메뉴 상세 (MNU-02)
+      responses:
+        '200':
+          description: 메뉴 상세
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MenuDetailResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/InternalError' }
+    put:
+      tags: [menu]
+      operationId: updateMenu
+      summary: 메뉴 수정 (MNU-04). 액션을 빼면 회수되는 역할을 돌려준다
+      description: |
+        dryRun=Y면 저장하지 않고 회수될 역할만 돌려준다 (프론트는 이 결과로 확인창을 띄운다).
+        시스템 메뉴·게시판 자동 메뉴는 메뉴명·아이콘만 바꿀 수 있다.
+      parameters:
+        - name: dryRun
+          in: query
+          schema:
+            $ref: '#/components/schemas/YnFlag'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MenuUpdateRequest'
+      responses:
+        '200':
+          description: 회수된(dryRun이면 회수될) 역할
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MenuUpdateResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+    delete:
+      tags: [menu]
+      operationId: deleteMenu
+      summary: 메뉴 삭제 (MNU-07). 권한과 역할 매핑도 함께 지운다
+      responses:
+        '200':
+          description: 삭제 완료
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmptyResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /menus/{menuId}/parent:
+    parameters:
+      - $ref: '#/components/parameters/MenuId'
+    patch:
+      tags: [menu]
+      operationId: moveMenu
+      summary: 상위 메뉴 변경 (MNU-05). 새 상위 메뉴의 맨 뒤 순서가 된다
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MenuMoveRequest'
+      responses:
+        '200':
+          description: 이동 완료
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmptyResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
 components:
   securitySchemes:
     bearerAuth:
@@ -450,6 +636,13 @@ components:
       description: Access Token (docs/04-features/09-auth.md 1.1)
 
   parameters:
+    MenuId:
+      name: menuId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
     GroupCd:
       name: groupCd
       in: path
@@ -1017,3 +1210,191 @@ components:
               $ref: '#/components/schemas/CodeItem'
         error:
           $ref: '#/components/schemas/NullError'
+
+    # ---------------------------------------------------------------
+    # 메뉴관리 (docs/06-api/03-menu.md)
+    # ---------------------------------------------------------------
+    MenuAdminNode:
+      type: object
+      required: [menuId, parentMenuId, menuCd, menuNm, menuTypeCd, menuUrl, depth, sortOrd, useYn, systemYn, boardAutoYn, children]
+      properties:
+        menuId: { type: integer, format: int64 }
+        parentMenuId: { type: integer, format: int64, nullable: true }
+        menuCd: { type: string }
+        menuNm: { type: string }
+        menuTypeCd: { type: string, enum: [FOLDER, PAGE] }
+        menuUrl: { type: string, nullable: true }
+        depth: { type: integer, minimum: 1, maximum: 3 }
+        sortOrd: { type: integer }
+        useYn: { $ref: '#/components/schemas/YnFlag' }
+        systemYn: { $ref: '#/components/schemas/YnFlag' }
+        boardAutoYn:
+          $ref: '#/components/schemas/YnFlag'
+        children:
+          type: array
+          items: { $ref: '#/components/schemas/MenuAdminNode' }
+
+    MenuTreeResponse:
+      type: object
+      required: [success, data, error]
+      properties:
+        success: { type: boolean, enum: [true] }
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/MenuAdminNode' }
+        error: { $ref: '#/components/schemas/NullError' }
+
+    MenuDetail:
+      type: object
+      required: [menuId, parentMenuId, parentMenuNm, menuCd, menuNm, menuTypeCd, menuUrl, icon, depth, sortOrd, useYn, systemYn, boardAutoYn, actions, modDt]
+      properties:
+        menuId: { type: integer, format: int64 }
+        parentMenuId: { type: integer, format: int64, nullable: true }
+        parentMenuNm: { type: string, nullable: true }
+        menuCd: { type: string }
+        menuNm: { type: string }
+        menuTypeCd: { type: string, enum: [FOLDER, PAGE] }
+        menuUrl: { type: string, nullable: true }
+        icon: { type: string, nullable: true }
+        depth: { type: integer, minimum: 1, maximum: 3 }
+        sortOrd: { type: integer }
+        useYn: { $ref: '#/components/schemas/YnFlag' }
+        systemYn: { $ref: '#/components/schemas/YnFlag' }
+        boardAutoYn: { $ref: '#/components/schemas/YnFlag' }
+        actions:
+          type: array
+          description: 사용 액션 (폴더 메뉴는 빈 배열)
+          items: { $ref: '#/components/schemas/Action' }
+        modDt: { $ref: '#/components/schemas/DateTime' }
+
+    MenuDetailResponse:
+      type: object
+      required: [success, data, error]
+      properties:
+        success: { type: boolean, enum: [true] }
+        data: { $ref: '#/components/schemas/MenuDetail' }
+        error: { $ref: '#/components/schemas/NullError' }
+
+    MenuCreateRequest:
+      type: object
+      required: [menuCd, menuNm, menuTypeCd, actions, useYn]
+      additionalProperties: false
+      properties:
+        parentMenuId:
+          type: integer
+          format: int64
+          nullable: true
+          description: 없으면 최상위 메뉴
+        menuCd: { type: string, pattern: '^[A-Z0-9_]+$', maxLength: 50 }
+        menuNm: { type: string, minLength: 1, maxLength: 100 }
+        menuTypeCd: { type: string, enum: [FOLDER, PAGE] }
+        menuUrl:
+          type: string
+          nullable: true
+          pattern: '^/'
+          maxLength: 200
+          description: 화면 메뉴는 필수, 폴더 메뉴는 비운다
+        actions:
+          type: array
+          description: 화면 메뉴의 사용 액션 (READ는 항상 포함된다). 폴더 메뉴는 빈 배열
+          items: { $ref: '#/components/schemas/Action' }
+        icon: { type: string, nullable: true, maxLength: 50 }
+        useYn: { $ref: '#/components/schemas/YnFlag' }
+
+    MenuCreatedResponse:
+      type: object
+      required: [success, data, error]
+      properties:
+        success: { type: boolean, enum: [true] }
+        data:
+          type: object
+          required: [menuId]
+          properties:
+            menuId: { type: integer, format: int64 }
+        error: { $ref: '#/components/schemas/NullError' }
+
+    MenuUpdateRequest:
+      type: object
+      required: [menuNm, actions, useYn, modDt]
+      additionalProperties: false
+      properties:
+        menuNm: { type: string, minLength: 1, maxLength: 100 }
+        menuUrl: { type: string, nullable: true, pattern: '^/', maxLength: 200 }
+        actions:
+          type: array
+          items: { $ref: '#/components/schemas/Action' }
+        icon: { type: string, nullable: true, maxLength: 50 }
+        useYn: { $ref: '#/components/schemas/YnFlag' }
+        modDt: { $ref: '#/components/schemas/DateTime' }
+
+    RevokedRole:
+      type: object
+      required: [roleId, roleNm, actions]
+      properties:
+        roleId: { type: integer, format: int64 }
+        roleNm: { type: string }
+        actions:
+          type: array
+          items: { $ref: '#/components/schemas/Action' }
+
+    MenuUpdateResponse:
+      type: object
+      required: [success, data, error]
+      properties:
+        success: { type: boolean, enum: [true] }
+        data:
+          type: object
+          required: [revokedRoles]
+          properties:
+            revokedRoles:
+              type: array
+              items: { $ref: '#/components/schemas/RevokedRole' }
+        error: { $ref: '#/components/schemas/NullError' }
+
+    MenuMoveRequest:
+      type: object
+      required: [modDt]
+      additionalProperties: false
+      properties:
+        parentMenuId:
+          type: integer
+          format: int64
+          nullable: true
+          description: 없으면 최상위로 옮긴다
+        modDt: { $ref: '#/components/schemas/DateTime' }
+
+    MenuOrderRequest:
+      type: object
+      required: [orders]
+      additionalProperties: false
+      properties:
+        orders:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [menuIds]
+            additionalProperties: false
+            properties:
+              parentMenuId:
+                type: integer
+                format: int64
+                nullable: true
+                description: 없으면 최상위 메뉴들의 순서
+              menuIds:
+                type: array
+                minItems: 1
+                description: 그 상위 메뉴의 하위 메뉴 전부를 새 순서대로
+                items: { type: integer, format: int64 }
+
+    AvailabilityResponse:
+      type: object
+      required: [success, data, error]
+      properties:
+        success: { type: boolean, enum: [true] }
+        data:
+          type: object
+          required: [available]
+          properties:
+            available: { type: boolean }
+        error: { $ref: '#/components/schemas/NullError' }

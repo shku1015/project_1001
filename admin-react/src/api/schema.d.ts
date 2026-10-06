@@ -212,6 +212,118 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/menus/tree": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 전체 메뉴 트리 (MNU-01). 사용 안 함 메뉴도 포함 */
+        get: operations["getMenuTree"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/menus/check-menu-cd": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 메뉴 코드 중복 확인 */
+        get: operations["checkMenuCd"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/menus": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** 메뉴 등록 (MNU-03). 같은 상위 메뉴의 맨 뒤 순서가 되고, 화면 메뉴는 사용 액션만큼 권한이 생긴다 */
+        post: operations["createMenu"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/menus/order": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** 순서 저장 (MNU-06). 상위 메뉴별 하위 메뉴 목록을 빠짐없이 보낸다 */
+        put: operations["saveMenuOrder"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/menus/{menuId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                menuId: components["parameters"]["MenuId"];
+            };
+            cookie?: never;
+        };
+        /** 메뉴 상세 (MNU-02) */
+        get: operations["getMenu"];
+        /**
+         * 메뉴 수정 (MNU-04). 액션을 빼면 회수되는 역할을 돌려준다
+         * @description dryRun=Y면 저장하지 않고 회수될 역할만 돌려준다 (프론트는 이 결과로 확인창을 띄운다).
+         *     시스템 메뉴·게시판 자동 메뉴는 메뉴명·아이콘만 바꿀 수 있다.
+         */
+        put: operations["updateMenu"];
+        post?: never;
+        /** 메뉴 삭제 (MNU-07). 권한과 역할 매핑도 함께 지운다 */
+        delete: operations["deleteMenu"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/menus/{menuId}/parent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                menuId: components["parameters"]["MenuId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** 상위 메뉴 변경 (MNU-05). 새 상위 메뉴의 맨 뒤 순서가 된다 */
+        patch: operations["moveMenu"];
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -438,6 +550,131 @@ export interface components {
             };
             error: components["schemas"]["NullError"];
         };
+        MenuAdminNode: {
+            /** Format: int64 */
+            menuId: number;
+            /** Format: int64 */
+            parentMenuId: number | null;
+            menuCd: string;
+            menuNm: string;
+            /** @enum {string} */
+            menuTypeCd: "FOLDER" | "PAGE";
+            menuUrl: string | null;
+            depth: number;
+            sortOrd: number;
+            useYn: components["schemas"]["YnFlag"];
+            systemYn: components["schemas"]["YnFlag"];
+            boardAutoYn: components["schemas"]["YnFlag"];
+            children: components["schemas"]["MenuAdminNode"][];
+        };
+        MenuTreeResponse: {
+            /** @enum {boolean} */
+            success: true;
+            data: components["schemas"]["MenuAdminNode"][];
+            error: components["schemas"]["NullError"];
+        };
+        MenuDetail: {
+            /** Format: int64 */
+            menuId: number;
+            /** Format: int64 */
+            parentMenuId: number | null;
+            parentMenuNm: string | null;
+            menuCd: string;
+            menuNm: string;
+            /** @enum {string} */
+            menuTypeCd: "FOLDER" | "PAGE";
+            menuUrl: string | null;
+            icon: string | null;
+            depth: number;
+            sortOrd: number;
+            useYn: components["schemas"]["YnFlag"];
+            systemYn: components["schemas"]["YnFlag"];
+            boardAutoYn: components["schemas"]["YnFlag"];
+            /** @description 사용 액션 (폴더 메뉴는 빈 배열) */
+            actions: components["schemas"]["Action"][];
+            modDt: components["schemas"]["DateTime"];
+        };
+        MenuDetailResponse: {
+            /** @enum {boolean} */
+            success: true;
+            data: components["schemas"]["MenuDetail"];
+            error: components["schemas"]["NullError"];
+        };
+        MenuCreateRequest: {
+            /**
+             * Format: int64
+             * @description 없으면 최상위 메뉴
+             */
+            parentMenuId?: number | null;
+            menuCd: string;
+            menuNm: string;
+            /** @enum {string} */
+            menuTypeCd: "FOLDER" | "PAGE";
+            /** @description 화면 메뉴는 필수, 폴더 메뉴는 비운다 */
+            menuUrl?: string | null;
+            /** @description 화면 메뉴의 사용 액션 (READ는 항상 포함된다). 폴더 메뉴는 빈 배열 */
+            actions: components["schemas"]["Action"][];
+            icon?: string | null;
+            useYn: components["schemas"]["YnFlag"];
+        };
+        MenuCreatedResponse: {
+            /** @enum {boolean} */
+            success: true;
+            data: {
+                /** Format: int64 */
+                menuId: number;
+            };
+            error: components["schemas"]["NullError"];
+        };
+        MenuUpdateRequest: {
+            menuNm: string;
+            menuUrl?: string | null;
+            actions: components["schemas"]["Action"][];
+            icon?: string | null;
+            useYn: components["schemas"]["YnFlag"];
+            modDt: components["schemas"]["DateTime"];
+        };
+        RevokedRole: {
+            /** Format: int64 */
+            roleId: number;
+            roleNm: string;
+            actions: components["schemas"]["Action"][];
+        };
+        MenuUpdateResponse: {
+            /** @enum {boolean} */
+            success: true;
+            data: {
+                revokedRoles: components["schemas"]["RevokedRole"][];
+            };
+            error: components["schemas"]["NullError"];
+        };
+        MenuMoveRequest: {
+            /**
+             * Format: int64
+             * @description 없으면 최상위로 옮긴다
+             */
+            parentMenuId?: number | null;
+            modDt: components["schemas"]["DateTime"];
+        };
+        MenuOrderRequest: {
+            orders: {
+                /**
+                 * Format: int64
+                 * @description 없으면 최상위 메뉴들의 순서
+                 */
+                parentMenuId?: number | null;
+                /** @description 그 상위 메뉴의 하위 메뉴 전부를 새 순서대로 */
+                menuIds: number[];
+            }[];
+        };
+        AvailabilityResponse: {
+            /** @enum {boolean} */
+            success: true;
+            data: {
+                available: boolean;
+            };
+            error: components["schemas"]["NullError"];
+        };
     };
     responses: {
         /** @description 입력값 오류 (VALIDATION_ERROR, INVALID_REQUEST) */
@@ -496,6 +733,7 @@ export interface components {
         };
     };
     parameters: {
+        MenuId: number;
         GroupCd: string;
         /** @description 페이지 번호 (1부터) */
         Page: number;
@@ -1001,6 +1239,234 @@ export interface operations {
                     "application/json": components["schemas"]["EmptyResponse"];
                 };
             };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    getMenuTree: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description depth, sortOrd 순서의 트리 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MenuTreeResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    checkMenuCd: {
+        parameters: {
+            query: {
+                menuCd: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 사용할 수 있으면 available=true */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AvailabilityResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    createMenu: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MenuCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description 등록 완료 */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MenuCreatedResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    saveMenuOrder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MenuOrderRequest"];
+            };
+        };
+        responses: {
+            /** @description 저장 완료 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmptyResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    getMenu: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                menuId: components["parameters"]["MenuId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 메뉴 상세 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MenuDetailResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    updateMenu: {
+        parameters: {
+            query?: {
+                dryRun?: components["schemas"]["YnFlag"];
+            };
+            header?: never;
+            path: {
+                menuId: components["parameters"]["MenuId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MenuUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description 회수된(dryRun이면 회수될) 역할 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MenuUpdateResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    deleteMenu: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                menuId: components["parameters"]["MenuId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 삭제 완료 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmptyResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    moveMenu: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                menuId: components["parameters"]["MenuId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MenuMoveRequest"];
+            };
+        };
+        responses: {
+            /** @description 이동 완료 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmptyResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];

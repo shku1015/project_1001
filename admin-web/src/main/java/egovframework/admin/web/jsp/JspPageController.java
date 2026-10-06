@@ -14,15 +14,19 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 public class JspPageController {
 
     private final String tablerVersion;
+    private final String sortablejsVersion;
 
-    public JspPageController(@Value("${app.ui.tabler-version}") String tablerVersion) {
+    public JspPageController(@Value("${app.ui.tabler-version}") String tablerVersion,
+                             @Value("${app.ui.sortablejs-version}") String sortablejsVersion) {
         this.tablerVersion = tablerVersion;
+        this.sortablejsVersion = sortablejsVersion;
     }
 
     @ModelAttribute
     public void common(Model model) {
         model.addAttribute("prefix", "/jsp");
         model.addAttribute("tablerVersion", tablerVersion);
+        model.addAttribute("sortablejsVersion", sortablejsVersion);
     }
 
     @GetMapping("/jsp/login")
@@ -43,6 +47,11 @@ public class JspPageController {
     @GetMapping("/jsp/me")
     public String me() {
         return "jsp/me";
+    }
+
+    @GetMapping("/jsp/menus")
+    public String menus() {
+        return "jsp/menu";
     }
 
     @GetMapping("/jsp/codes")

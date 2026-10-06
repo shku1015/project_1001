@@ -126,6 +126,12 @@
             <artifactId>tabler__core</artifactId>
             <version>${tabler.version}</version>
         </dependency>
+        <!-- 메뉴 트리 드래그 (ADR-0015). ②③은 /webjars/sortablejs/{버전}/Sortable.min.js, ①은 npm sortablejs 같은 버전 -->
+        <dependency>
+            <groupId>org.webjars.npm</groupId>
+            <artifactId>sortablejs</artifactId>
+            <version>${sortablejs.version}</version>
+        </dependency>
 
         <!-- 테스트: 실제 PostgreSQL 컨테이너 (ADR-0019) -->
         <dependency>

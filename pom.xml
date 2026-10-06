@@ -30,6 +30,7 @@
         <mybatis.spring.boot.version>3.0.5</mybatis.spring.boot.version>
         <jjwt.version>0.13.0</jjwt.version>
         <tabler.version>1.6.1</tabler.version>
+        <sortablejs.version>1.15.7</sortablejs.version>
         <openapi.request.validator.version>2.46.1</openapi.request.validator.version>
     </properties>
 

@@ -40,10 +40,18 @@ export default async function globalSetup() {
     // E2E가 만든 코드관리 데이터 정리 (반복 실행 안전)
     await client.query("DELETE FROM tb_code WHERE group_cd LIKE 'E2E\\_%'")
     await client.query("DELETE FROM tb_code_group WHERE group_cd LIKE 'E2E\\_%'")
+    // E2E가 만든 메뉴관리 데이터 정리 (권한·역할 매핑 → 깊은 메뉴부터)
+    await client.query(`DELETE FROM tb_role_permission WHERE perm_id IN (
+        SELECT p.perm_id FROM tb_permission p JOIN tb_menu m ON m.menu_id = p.menu_id WHERE m.menu_cd LIKE 'E2E\\_%')`)
+    await client.query("DELETE FROM tb_permission WHERE menu_id IN (SELECT menu_id FROM tb_menu WHERE menu_cd LIKE 'E2E\\_%')")
+    for (const depth of [3, 2, 1]) {
+      await client.query("DELETE FROM tb_menu WHERE menu_cd LIKE 'E2E\\_%' AND depth = $1", [depth])
+    }
     for (const front of FRONTS) {
       // 임시 비밀번호 계정 (비밀번호 변경 시나리오), 내 정보 수정 계정
       await createAdmin(client, `e2e_temp_${front}`, password, true)
       await createAdmin(client, `e2e_me_${front}`, password, false)
+      await createOrderMenus(client, front)
     }
     await client.query('COMMIT')
   } catch (e) {
@@ -65,4 +73,21 @@ async function createAdmin(client: pg.Client, loginId: string, password: string,
      SELECT a.admin_id, r.role_id FROM tb_admin a, tb_role r WHERE a.login_id = $1 AND r.role_cd = 'VIEWER'`,
     [loginId],
   )
+}
+
+/** 순서 변경 시나리오용 메뉴: 최상위 폴더 1개와 화면 메뉴 2개 ('E2E 가' → 'E2E 나' 순서) */
+async function createOrderMenus(client: pg.Client, front: string) {
+  const code = `E2E_${front.toUpperCase()}_ORD`
+  const { rows } = await client.query(
+    `INSERT INTO tb_menu (menu_cd, menu_nm, menu_type_cd, depth, sort_ord)
+     VALUES ($1::text, $2::text, 'FOLDER', 1, 100) RETURNING menu_id`,
+    [code, `E2E 순서 ${front}`],
+  )
+  for (const [i, nm] of ['가', '나'].entries()) {
+    await client.query(
+      `INSERT INTO tb_menu (parent_menu_id, menu_cd, menu_nm, menu_type_cd, menu_url, depth, sort_ord)
+       VALUES ($1, $2::text, $3::text, 'PAGE', $4::text, 2, $5)`,
+      [rows[0].menu_id, `${code}_${i + 1}`, `E2E ${nm} ${front}`, `/e2e-${front}-${i + 1}`, i + 1],
+    )
+  }
 }
