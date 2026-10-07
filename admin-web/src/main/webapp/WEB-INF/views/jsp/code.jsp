@@ -14,7 +14,7 @@
                 <div class="card">
                     <div class="card-header">
                         <h3 class="card-title">그룹코드</h3>
-                        <div class="card-actions"><button type="button" class="btn btn-primary btn-sm d-none" id="btn-group-create" data-bs-toggle="modal" data-bs-target="#group-modal" data-mode="create">그룹 등록</button></div>
+                        <div class="card-actions"><button type="button" class="btn btn-primary btn-sm" id="btn-group-create" disabled data-bs-toggle="modal" data-bs-target="#group-modal" data-mode="create">그룹 등록</button></div>
                     </div>
                     <div class="card-body border-bottom">
                         <form class="row g-2" id="group-search">

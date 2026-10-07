@@ -86,6 +86,9 @@ export function CodePage() {
   }
 
   const sys = selected?.systemYn === 'Y'
+  // 권한이 없는 버튼은 비활성으로 보여 준다 (docs/05-ia-screens.md 4.2)
+  const perm = (action: 'CREATE' | 'UPDATE' | 'DELETE') =>
+    can(me, 'CODE', action) ? { disabled: false } : { disabled: true, title: '권한이 없습니다' }
   const nextSort = details.length ? Math.max(...details.map((d) => d.sortOrd)) + 1 : 1
   const renderUseYn = (value: string, onChange: (v: string) => void) => (
     <div className="mb-3">
@@ -108,10 +111,8 @@ export function CodePage() {
             <div className="card-header">
               <h3 className="card-title">그룹코드</h3>
               <div className="card-actions">
-                {can(me, 'CODE', 'CREATE') && (
-                  <button type="button" className="btn btn-primary btn-sm" id="btn-group-create"
-                          onClick={() => { setFormError(null); setGroupForm({ mode: 'create', groupCd: '', groupNm: '', description: '', useYn: 'Y', systemYn: 'N', modDt: '' }) }}>그룹 등록</button>
-                )}
+                <button type="button" className="btn btn-primary btn-sm" id="btn-group-create" {...perm('CREATE')}
+                        onClick={() => { setFormError(null); setGroupForm({ mode: 'create', groupCd: '', groupNm: '', description: '', useYn: 'Y', systemYn: 'N', modDt: '' }) }}>그룹 등록</button>
               </div>
             </div>
             <div className="card-body border-bottom">
@@ -151,10 +152,10 @@ export function CodePage() {
               <div className="card-header">
                 <h3 className="card-title">{sys ? '🔒 ' : ''}{selected.groupNm} <span className="text-secondary ms-1">({selected.groupCd})</span></h3>
                 <div className="card-actions btn-list">
-                  {can(me, 'CODE', 'UPDATE') && <button type="button" className="btn btn-sm" id="btn-group-edit"
-                    onClick={() => { setFormError(null); setGroupForm({ mode: 'edit', groupCd: selected.groupCd, groupNm: selected.groupNm, description: selected.description ?? '', useYn: selected.useYn, systemYn: selected.systemYn, modDt: selected.modDt }) }}>그룹 수정</button>}
-                  {can(me, 'CODE', 'DELETE') && !sys && details.length === 0 && <button type="button" className="btn btn-sm btn-ghost-danger" onClick={removeGroup}>그룹 삭제</button>}
-                  {can(me, 'CODE', 'CREATE') && !sys && <button type="button" className="btn btn-sm btn-primary" id="btn-detail-create"
+                  <button type="button" className="btn btn-sm" id="btn-group-edit" {...perm('UPDATE')}
+                    onClick={() => { setFormError(null); setGroupForm({ mode: 'edit', groupCd: selected.groupCd, groupNm: selected.groupNm, description: selected.description ?? '', useYn: selected.useYn, systemYn: selected.systemYn, modDt: selected.modDt }) }}>그룹 수정</button>
+                  {!sys && details.length === 0 && <button type="button" className="btn btn-sm btn-ghost-danger" id="btn-group-delete" {...perm('DELETE')} onClick={removeGroup}>그룹 삭제</button>}
+                  {!sys && <button type="button" className="btn btn-sm btn-primary" id="btn-detail-create" {...perm('CREATE')}
                     onClick={() => { setFormError(null); setDetailForm({ mode: 'create', code: '', codeNm: '', sortOrd: nextSort, description: '', useYn: 'Y', modDt: '' }) }}>코드 등록</button>}
                 </div>
               </div>
@@ -166,9 +167,9 @@ export function CodePage() {
                       <tr key={d.code}>
                         <td>{d.code}</td><td>{d.codeNm}</td><td className="text-center">{d.sortOrd}</td><td>{d.description}</td><td className="text-center">{d.useYn === 'Y' ? '사용' : '사용 안 함'}</td>
                         <td className="text-end btn-list">
-                          {can(me, 'CODE', 'UPDATE') && <button type="button" className="btn btn-sm"
-                            onClick={() => { setFormError(null); setDetailForm({ mode: 'edit', code: d.code, codeNm: d.codeNm, sortOrd: d.sortOrd, description: d.description ?? '', useYn: d.useYn, modDt: d.modDt }) }}>수정</button>}
-                          {can(me, 'CODE', 'DELETE') && !sys && <button type="button" className="btn btn-sm btn-ghost-danger" onClick={() => removeDetail(d.code)}>삭제</button>}
+                          <button type="button" className="btn btn-sm" {...perm('UPDATE')}
+                            onClick={() => { setFormError(null); setDetailForm({ mode: 'edit', code: d.code, codeNm: d.codeNm, sortOrd: d.sortOrd, description: d.description ?? '', useYn: d.useYn, modDt: d.modDt }) }}>수정</button>
+                          {!sys && <button type="button" className="btn btn-sm btn-ghost-danger" {...perm('DELETE')} onClick={() => removeDetail(d.code)}>삭제</button>}
                         </td>
                       </tr>
                     ))}
