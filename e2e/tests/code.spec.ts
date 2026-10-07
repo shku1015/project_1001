@@ -8,14 +8,14 @@ import { e2ePassword } from '../global-setup'
 const prefix = () => test.info().project.metadata.prefix as string
 const front = () => test.info().project.name
 
-async function login(page: Page) {
+async function login(page: Page, loginId = 't_system', adminNm = '테스트시스템') {
   await page.goto(`${prefix()}/login`)
-  await page.getByLabel('아이디', { exact: true }).fill('t_system')
+  await page.getByLabel('아이디', { exact: true }).fill(loginId)
   await page.getByLabel('비밀번호', { exact: true }).fill(e2ePassword())
   await page.getByRole('button', { name: '로그인' }).click()
   await expect(page).toHaveURL(new RegExp(`${prefix()}/?$`))
   // 홈 레이아웃이 자리 잡은 뒤 다음 화면으로 이동한다 (이동 중 리다이렉트와 겹치지 않게)
-  await expect(page.locator('#user-name')).toHaveText('테스트시스템')
+  await expect(page.locator('#user-name')).toHaveText(adminNm)
 }
 
 async function gotoCodes(page: Page) {
@@ -88,4 +88,16 @@ test('조회전용 관리자는 코드관리 메뉴가 보이지 않는다', asy
   await page.getByRole('button', { name: '로그인' }).click()
   await expect(page).toHaveURL(new RegExp(`${prefix()}/?$`))
   await expect(page.locator('#side-menu')).not.toContainText('코드관리')
+})
+
+test('조회 권한만 있으면 등록·수정 버튼이 비활성으로 보인다', async ({ page }) => {
+  // t_member(회원운영자)는 코드관리 READ만 있다 (docs/05-ia-screens.md 4.2)
+  await login(page, 't_member', '테스트회원운영')
+  await gotoCodes(page)
+  await expect(page.locator('#btn-group-create')).toBeDisabled()
+  await expect(page.locator('#btn-group-create')).toHaveAttribute('title', '권한이 없습니다')
+
+  await page.getByRole('link', { name: /USER_STATUS/ }).click()
+  await expect(page.locator('#btn-group-edit')).toBeDisabled()
+  await expect(page.locator('.col-lg-7').last().getByRole('button', { name: '수정', exact: true }).first()).toBeDisabled()
 })

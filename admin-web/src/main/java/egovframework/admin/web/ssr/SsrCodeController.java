@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import egovframework.admin.auth.AdminAuthInfo;
+import egovframework.admin.auth.AdminAuthInfoService;
 import egovframework.admin.auth.AuthTypes.Action;
 import egovframework.admin.code.CodeAdminService;
 import egovframework.admin.code.CodeGroup;
@@ -28,19 +30,27 @@ import jakarta.servlet.http.HttpServletRequest;
 public class SsrCodeController {
 
     private final CodeAdminService codeAdminService;
+    private final AdminAuthInfoService authInfoService;
 
-    public SsrCodeController(CodeAdminService codeAdminService) {
+    public SsrCodeController(CodeAdminService codeAdminService, AdminAuthInfoService authInfoService) {
         this.codeAdminService = codeAdminService;
+        this.authInfoService = authInfoService;
     }
 
     @GetMapping("/ssr/codes")
     @RequirePermission(menu = "CODE", action = Action.READ)
-    public String codes(@RequestParam(required = false) String keyword,
+    public String codes(@AuthenticationPrincipal AdminPrincipal principal,
+                        @RequestParam(required = false) String keyword,
                         @RequestParam(required = false) String useYn,
                         @RequestParam(required = false) String group, Model model) {
         model.addAttribute("groups", codeAdminService.getGroups(keyword, useYn));
         model.addAttribute("keyword", keyword);
         model.addAttribute("searchUseYn", useYn);
+        // 권한이 없는 버튼은 비활성으로 보여 준다 (docs/05-ia-screens.md 4.2)
+        AdminAuthInfo auth = authInfoService.load(principal.adminId());
+        model.addAttribute("canCreate", auth.has("CODE", Action.CREATE));
+        model.addAttribute("canUpdate", auth.has("CODE", Action.UPDATE));
+        model.addAttribute("canDelete", auth.has("CODE", Action.DELETE));
         if (group != null && !group.isBlank()) {
             CodeGroup selected = codeAdminService.getGroup(group);
             model.addAttribute("selectedGroup", selected);

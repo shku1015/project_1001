@@ -6,7 +6,9 @@
 (function () {
   'use strict';
   var BASE = '/code-groups';
+  var NO_PERM = '권한이 없습니다';
   var perms = [];
+  var superAdmin = false;
   var selected = null;   // 선택한 그룹 { groupCd, systemYn, ... }
   var esc = function (v) { var d = document.createElement('div'); d.textContent = v == null ? '' : v; return d.innerHTML; };
   var byId = function (id) { return document.getElementById(id); };
@@ -14,7 +16,11 @@
   (async function () {
     var me = await AdminJsp.requireLogin();
     perms = (me.permissions && me.permissions.CODE) || [];
-    if (can('CREATE')) { byId('btn-group-create').classList.remove('d-none'); }
+    superAdmin = !!me.superAdmin;
+    // 권한이 없는 버튼은 비활성으로 보여 준다 (docs/05-ia-screens.md 4.2)
+    var create = byId('btn-group-create');
+    create.disabled = !can('CREATE');
+    create.title = can('CREATE') ? '' : NO_PERM;
 
     byId('group-search').addEventListener('submit', function (e) { e.preventDefault(); loadGroups(); });
     byId('group-form').addEventListener('submit', saveGroup);
@@ -24,7 +30,7 @@
     await loadGroups();
   })();
 
-  function can(action) { return perms.indexOf(action) >= 0; }
+  function can(action) { return superAdmin || perms.indexOf(action) >= 0; }
   function closeModal(id) {
     var el = byId(id).querySelector('[data-bs-dismiss="modal"]');
     if (el) { el.click(); }
@@ -65,25 +71,21 @@
   function renderDetailPanel(group, details) {
     var sys = group.systemYn === 'Y';
     var actions = '';
-    if (can('UPDATE')) {
-      actions += btn('그룹 수정', { 'bs-toggle': 'modal', 'bs-target': '#group-modal', mode: 'edit',
-        'group-cd': group.groupCd, 'group-nm': group.groupNm, description: group.description || '',
-        'use-yn': group.useYn, 'system-yn': group.systemYn, 'mod-dt': group.modDt });
-    }
-    if (can('DELETE') && !sys && !details.length) { actions += ' <button type="button" class="btn btn-sm btn-ghost-danger" id="btn-group-delete">그룹 삭제</button>'; }
-    if (can('CREATE') && !sys) {
+    actions += btn('그룹 수정', { 'bs-toggle': 'modal', 'bs-target': '#group-modal', mode: 'edit',
+      'group-cd': group.groupCd, 'group-nm': group.groupNm, description: group.description || '',
+      'use-yn': group.useYn, 'system-yn': group.systemYn, 'mod-dt': group.modDt }, '', 'UPDATE', 'btn-group-edit');
+    if (!sys && !details.length) { actions += ' ' + btn('그룹 삭제', {}, 'btn-ghost-danger', 'DELETE', 'btn-group-delete'); }
+    if (!sys) {
       actions += ' ' + btn('코드 등록', { 'bs-toggle': 'modal', 'bs-target': '#detail-modal', mode: 'create',
-        'next-sort': nextSort(details) }, 'btn-primary');
+        'next-sort': nextSort(details) }, 'btn-primary', 'CREATE', 'btn-detail-create');
     }
 
     var rows = details.map(function (d) {
       var btns = '';
-      if (can('UPDATE')) {
-        btns += btn('수정', { 'bs-toggle': 'modal', 'bs-target': '#detail-modal', mode: 'edit', code: d.code,
-          'code-nm': d.codeNm, 'sort-ord': d.sortOrd, description: d.description || '', 'use-yn': d.useYn,
-          'system-yn': group.systemYn, 'mod-dt': d.modDt });
-      }
-      if (can('DELETE') && !sys) { btns += ' <button type="button" class="btn btn-sm btn-ghost-danger" data-del="' + esc(d.code) + '">삭제</button>'; }
+      btns += btn('수정', { 'bs-toggle': 'modal', 'bs-target': '#detail-modal', mode: 'edit', code: d.code,
+        'code-nm': d.codeNm, 'sort-ord': d.sortOrd, description: d.description || '', 'use-yn': d.useYn,
+        'system-yn': group.systemYn, 'mod-dt': d.modDt }, '', 'UPDATE');
+      if (!sys) { btns += ' ' + btn('삭제', { del: d.code }, 'btn-ghost-danger', 'DELETE'); }
       return '<tr><td>' + esc(d.code) + '</td><td>' + esc(d.codeNm) + '</td><td class="text-center">' + d.sortOrd +
         '</td><td>' + esc(d.description) + '</td><td class="text-center">' + (d.useYn === 'Y' ? '사용' : '사용 안 함') +
         '</td><td class="text-end btn-list">' + btns + '</td></tr>';
@@ -204,8 +206,10 @@
   }
 
   // ----- 유틸 -----
-  function btn(label, data, extraClass) {
-    var attrs = 'type="button" class="btn btn-sm ' + (extraClass || '') + '"';
+  /** action 권한이 없으면 비활성 버튼 (마우스를 올리면 "권한이 없습니다") */
+  function btn(label, data, extraClass, action, id) {
+    var attrs = 'type="button" class="btn btn-sm ' + (extraClass || '') + '"' + (id ? ' id="' + id + '"' : '');
+    if (!can(action)) { attrs += ' disabled title="' + NO_PERM + '"'; }
     Object.keys(data).forEach(function (k) { attrs += ' data-' + k + '="' + esc(data[k]) + '"'; });
     return '<button ' + attrs + '>' + esc(label) + '</button>';
   }

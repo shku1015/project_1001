@@ -2,6 +2,7 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="ui" tagdir="/WEB-INF/tags" %>
 <%-- SCR-COD-01 코드관리 (③ JSP SSR). 왼쪽 그룹코드, 오른쪽 상세코드. 등록·수정은 모달 폼 --%>
+<c:set var="noPerm" value="권한이 없습니다"/>
 <ui:layout title="코드관리" mode="ssr">
     <jsp:attribute name="scripts">
         <script src="<c:url value='/common/js/admin-code.js'/>"></script>
@@ -15,7 +16,7 @@
                         <h3 class="card-title">그룹코드</h3>
                         <div class="card-actions">
                             <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#group-modal"
-                                    data-mode="create" id="btn-group-create">그룹 등록</button>
+                                    data-mode="create" id="btn-group-create" ${canCreate ? '' : 'disabled'} title="${canCreate ? '' : noPerm}">그룹 등록</button>
                         </div>
                     </div>
                     <div class="card-body border-bottom">
@@ -79,17 +80,17 @@
                                             data-description="<c:out value='${selectedGroup.description()}'/>"
                                             data-use-yn="${selectedGroup.useYn()}"
                                             data-system-yn="${selectedGroup.systemYn()}"
-                                            data-mod-dt="${selectedGroup.modDt()}" id="btn-group-edit">그룹 수정</button>
+                                            data-mod-dt="${selectedGroup.modDt()}" id="btn-group-edit" ${canUpdate ? '' : 'disabled'} title="${canUpdate ? '' : noPerm}">그룹 수정</button>
                                     <c:if test="${selectedGroup.systemYn() != 'Y' and empty details}">
                                         <form method="post" action="<c:url value='/ssr/codes/groups/${selectedGroup.groupCd()}/delete'/>"
                                               onsubmit="return confirm('그룹코드를 삭제하시겠습니까?')" class="d-inline">
                                             <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
-                                            <button type="submit" class="btn btn-sm btn-ghost-danger">그룹 삭제</button>
+                                            <button type="submit" class="btn btn-sm btn-ghost-danger" id="btn-group-delete" ${canDelete ? '' : 'disabled'} title="${canDelete ? '' : noPerm}">그룹 삭제</button>
                                         </form>
                                     </c:if>
                                     <c:if test="${selectedGroup.systemYn() != 'Y'}">
                                         <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#detail-modal"
-                                                data-mode="create" data-next-sort="${nextSortOrd}" id="btn-detail-create">코드 등록</button>
+                                                data-mode="create" data-next-sort="${nextSortOrd}" id="btn-detail-create" ${canCreate ? '' : 'disabled'} title="${canCreate ? '' : noPerm}">코드 등록</button>
                                     </c:if>
                                 </div>
                             </div>
@@ -113,12 +114,12 @@
                                                         data-description="<c:out value='${d.description()}'/>"
                                                         data-use-yn="${d.useYn()}"
                                                         data-system-yn="${selectedGroup.systemYn()}"
-                                                        data-mod-dt="${d.modDt()}">수정</button>
+                                                        data-mod-dt="${d.modDt()}" ${canUpdate ? '' : 'disabled'} title="${canUpdate ? '' : noPerm}">수정</button>
                                                 <c:if test="${selectedGroup.systemYn() != 'Y'}">
                                                     <form method="post" action="<c:url value='/ssr/codes/groups/${selectedGroup.groupCd()}/codes/${d.code()}/delete'/>"
                                                           onsubmit="return confirm('삭제하면 복구할 수 없습니다. 사용 안 함으로 바꾸는 것을 권장합니다. 삭제하시겠습니까?')" class="d-inline">
                                                         <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
-                                                        <button type="submit" class="btn btn-sm btn-ghost-danger">삭제</button>
+                                                        <button type="submit" class="btn btn-sm btn-ghost-danger" ${canDelete ? '' : 'disabled'} title="${canDelete ? '' : noPerm}">삭제</button>
                                                     </form>
                                                 </c:if>
                                             </td>
