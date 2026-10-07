@@ -2,7 +2,8 @@ import { Modal as BsModal } from 'bootstrap'
 import { useEffect, useRef, type ReactNode } from 'react'
 
 /** Bootstrap(Tabler) 모달을 감싼 컴포넌트. open이 true일 때 보여 준다 */
-export function Modal({ open, title, onClose, children, footer }: {
+export function Modal({ id, open, title, onClose, children, footer }: {
+  id?: string
   open: boolean
   title: string
   onClose: () => void
@@ -35,7 +36,7 @@ export function Modal({ open, title, onClose, children, footer }: {
   }, [open])
 
   return (
-    <div className="modal modal-blur fade" tabIndex={-1} ref={ref}>
+    <div className="modal modal-blur fade" id={id} tabIndex={-1} ref={ref}>
       <div className="modal-dialog modal-dialog-centered">
         <div className="modal-content">
           <div className="modal-header">

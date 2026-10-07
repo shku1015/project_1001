@@ -5,6 +5,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 
 /**
  * ② JSP + API 화면 껍데기. 데이터가 없는 페이지만 내려주고, 인증·데이터·권한은 모두 API(토큰)에서 처리한다
@@ -57,5 +58,27 @@ public class JspPageController {
     @GetMapping("/jsp/codes")
     public String codes() {
         return "jsp/code";
+    }
+
+    @GetMapping("/jsp/roles")
+    public String roles() {
+        return "jsp/role-list";
+    }
+
+    @GetMapping("/jsp/roles/new")
+    public String roleNew() {
+        return "jsp/role-form";
+    }
+
+    @GetMapping("/jsp/roles/{roleId}")
+    public String role(@PathVariable long roleId, Model model) {
+        model.addAttribute("roleId", roleId);
+        return "jsp/role-detail";
+    }
+
+    @GetMapping("/jsp/roles/{roleId}/edit")
+    public String roleEdit(@PathVariable long roleId, Model model) {
+        model.addAttribute("roleId", roleId);
+        return "jsp/role-form";
     }
 }

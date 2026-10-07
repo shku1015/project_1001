@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.admin.role.RoleMapper">
+
+    <sql id="roleColumns">
+        r.role_id, r.role_cd, r.role_nm, r.description,
+        (SELECT count(*) FROM tb_admin_role ar WHERE ar.role_id = r.role_id)::int AS admin_cnt,
+        r.system_yn, r.use_yn, ra.admin_nm AS reg_nm, r.reg_dt, ma.admin_nm AS mod_nm, r.mod_dt
+    </sql>
+
+    <sql id="roleFrom">
+        FROM tb_role r
+        LEFT JOIN tb_admin ra ON ra.admin_id = r.reg_id
+        LEFT JOIN tb_admin ma ON ma.admin_id = r.mod_id
+    </sql>
+
+    <select id="selectRoles" resultType="egovframework.admin.role.RoleMapper$RoleRow">
+        SELECT <include refid="roleColumns"/>
+        <include refid="roleFrom"/>
+        <where>
+            <if test="keyword != null and keyword != ''">
+                (r.role_cd ILIKE '%' || #{keyword} || '%' OR r.role_nm ILIKE '%' || #{keyword} || '%')
+            </if>
+            <if test="useYn != null and useYn != ''">AND r.use_yn = #{useYn}</if>
+        </where>
+        ORDER BY r.role_id
+    </select>
+
+    <select id="selectRole" resultType="egovframework.admin.role.RoleMapper$RoleRow">
+        SELECT <include refid="roleColumns"/>
+        <include refid="roleFrom"/>
+        WHERE r.role_id = #{roleId}
+    </select>
+
+    <select id="existsRoleCd" resultType="boolean">
+        SELECT EXISTS (SELECT 1 FROM tb_role WHERE role_cd = #{roleCd})
+    </select>
+
+    <select id="hasRole" resultType="boolean">
+        SELECT EXISTS (SELECT 1 FROM tb_admin_role WHERE admin_id = #{adminId} AND role_id = #{roleId})
+    </select>
+
+    <select id="insertRole" resultType="long" flushCache="true">
+        INSERT INTO tb_role (role_cd, role_nm, description, use_yn, system_yn, reg_id, mod_id)
+        VALUES (#{roleCd}, #{roleNm}, #{description}, #{useYn}, 'N', #{regId}, #{regId})
+        RETURNING role_id
+    </select>
+
+    <update id="updateRole">
+        UPDATE tb_role
+        SET role_nm = #{roleNm}, description = #{description}, use_yn = #{useYn}, mod_id = #{modId}, mod_dt = now()
+        WHERE role_id = #{roleId}
+          AND date_trunc('second', mod_dt) = date_trunc('second', #{modDt}::timestamp)
+    </update>
+
+    <update id="touchRole">
+        UPDATE tb_role
+        SET mod_id = #{modId}, mod_dt = now()
+        WHERE role_id = #{roleId}
+          AND date_trunc('second', mod_dt) = date_trunc('second', #{modDt}::timestamp)
+    </update>
+
+    <delete id="deleteRole">
+        DELETE FROM tb_role WHERE role_id = #{roleId}
+    </delete>
+
+    <select id="selectMenus" resultType="egovframework.admin.role.RoleMapper$MenuRow">
+        SELECT menu_id, parent_menu_id, menu_cd, menu_nm, menu_type_cd, depth, use_yn
+        FROM tb_menu
+        ORDER BY depth, sort_ord, menu_id
+    </select>
+
+    <sql id="permOrder">
+        ORDER BY p.menu_id, CASE p.action_cd WHEN 'READ' THEN 1 WHEN 'CREATE' THEN 2 WHEN 'UPDATE' THEN 3
+                                             WHEN 'DELETE' THEN 4 WHEN 'EXCEL' THEN 5 ELSE 6 END
+    </sql>
+
+    <select id="selectAllPermissions" resultType="egovframework.admin.role.RoleMapper$PermRow">
+        SELECT p.perm_id, p.menu_id, m.menu_cd, m.menu_nm, p.action_cd
+        FROM tb_permission p JOIN tb_menu m ON m.menu_id = p.menu_id
+        <include refid="permOrder"/>
+    </select>
+
+    <select id="selectRolePermissions" resultType="egovframework.admin.role.RoleMapper$PermRow">
+        SELECT p.perm_id, p.menu_id, m.menu_cd, m.menu_nm, p.action_cd
+        FROM tb_role_permission rp
+        JOIN tb_permission p ON p.perm_id = rp.perm_id
+        JOIN tb_menu m ON m.menu_id = p.menu_id
+        WHERE rp.role_id = #{roleId}
+        <include refid="permOrder"/>
+    </select>
+
+    <insert id="insertRolePermissions">
+        INSERT INTO tb_role_permission (role_id, perm_id, reg_id)
+        VALUES
+        <foreach collection="permIds" item="id" separator=",">(#{roleId}, #{id}, #{regId})</foreach>
+        ON CONFLICT (role_id, perm_id) DO NOTHING
+    </insert>
+
+    <delete id="deleteRolePermissions">
+        DELETE FROM tb_role_permission
+        WHERE role_id = #{roleId}
+          AND perm_id IN <foreach collection="permIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+    </delete>
+
+    <delete id="deleteAllRolePermissions">
+        DELETE FROM tb_role_permission WHERE role_id = #{roleId}
+    </delete>
+
+    <select id="selectRoleAdmins" resultType="egovframework.admin.role.RoleMapper$AdminRow">
+        SELECT a.admin_id, a.login_id, a.admin_nm, a.dept_nm, a.status_cd, c.code_nm AS status_nm,
+               ar.reg_dt AS granted_dt
+        FROM tb_admin_role ar
+        JOIN tb_admin a ON a.admin_id = ar.admin_id
+        LEFT JOIN tb_code c ON c.group_cd = 'ADMIN_STATUS' AND c.code = a.status_cd
+        WHERE ar.role_id = #{roleId}
+        ORDER BY ar.reg_dt, a.admin_id
+    </select>
+</mapper>
