@@ -40,6 +40,10 @@ export default async function globalSetup() {
     // E2E가 만든 코드관리 데이터 정리 (반복 실행 안전)
     await client.query("DELETE FROM tb_code WHERE group_cd LIKE 'E2E\\_%'")
     await client.query("DELETE FROM tb_code_group WHERE group_cd LIKE 'E2E\\_%'")
+    // E2E가 만든 역할 정리
+    await client.query("DELETE FROM tb_role_permission WHERE role_id IN (SELECT role_id FROM tb_role WHERE role_cd LIKE 'E2E\\_%')")
+    await client.query("DELETE FROM tb_admin_role WHERE role_id IN (SELECT role_id FROM tb_role WHERE role_cd LIKE 'E2E\\_%')")
+    await client.query("DELETE FROM tb_role WHERE role_cd LIKE 'E2E\\_%'")
     // E2E가 만든 메뉴관리 데이터 정리 (권한·역할 매핑 → 깊은 메뉴부터)
     await client.query(`DELETE FROM tb_role_permission WHERE perm_id IN (
         SELECT p.perm_id FROM tb_permission p JOIN tb_menu m ON m.menu_id = p.menu_id WHERE m.menu_cd LIKE 'E2E\\_%')`)

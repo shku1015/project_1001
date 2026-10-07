@@ -21,7 +21,7 @@
 
 **목록 파라미터**: `keyword`(역할 코드·이름), `useYn`
 **목록 항목**: `roleId`, `roleCd`, `roleNm`, `description`, `adminCnt`, `systemYn`, `useYn`
-**상세 항목**: 목록 항목 + `editable`(시스템 역할·내 역할이면 `false`), `regNm`, `regDt`, `modNm`, `modDt`
+**상세 항목**: 목록 항목 + `mine`(내가 가진 역할인지), `editable`(시스템 역할·내 역할이면 `false`. 슈퍼관리자는 내 역할도 `true`), `regNm`, `regDt`, `modNm`, `modDt`
 
 ## 권한 탭 (API-ROL-03)
 
@@ -46,7 +46,7 @@
 ```
 
 - 수정: `roleCd`는 무시한다.
-- 사용 안 함으로 바꿀 때 `?dryRun=Y`로 영향받는 관리자 수 `{ "affectedAdminCnt": 3 }`를 먼저 받을 수 있다.
+- 사용 안 함으로 바꿀 때 확인창의 관리자 수는 상세의 `adminCnt`를 쓴다 (별도 미리보기 API 없음).
 
 ## 복사 (API-ROL-07)
 

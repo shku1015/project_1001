@@ -22,6 +22,8 @@ tags:
     description: 코드관리 (docs/06-api/04-code.md)
   - name: menu
     description: 메뉴관리 (docs/06-api/03-menu.md)
+  - name: role
+    description: 역할관리 (docs/06-api/08-role.md)
 
 paths:
   /auth/token:
@@ -627,6 +629,235 @@ paths:
         '409': { $ref: '#/components/responses/Conflict' }
         '500': { $ref: '#/components/responses/InternalError' }
 
+  /roles:
+    get:
+      tags: [role]
+      operationId: listRoles
+      summary: 역할 목록 (ROL-01). 페이징 없음, 등록순
+      parameters:
+        - name: keyword
+          in: query
+          description: 역할 코드·역할명
+          schema: { type: string, maxLength: 100 }
+        - name: useYn
+          in: query
+          schema:
+            $ref: '#/components/schemas/YnFlag'
+      responses:
+        '200':
+          description: 역할 목록
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleListResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+    post:
+      tags: [role]
+      operationId: createRole
+      summary: 역할 등록 (ROL-03). 권한은 상세 화면에서 설정한다
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleCreateRequest'
+      responses:
+        '201':
+          description: 등록 완료
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleCreatedResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /roles/check-role-cd:
+    get:
+      tags: [role]
+      operationId: checkRoleCd
+      summary: 역할 코드 중복 확인
+      parameters:
+        - name: roleCd
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: '^[A-Z0-9_]+$'
+            maxLength: 50
+      responses:
+        '200':
+          description: 사용할 수 있으면 available=true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AvailabilityResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /roles/{roleId}:
+    parameters:
+      - $ref: '#/components/parameters/RoleId'
+    get:
+      tags: [role]
+      operationId: getRole
+      summary: 역할 상세 (ROL-02)
+      responses:
+        '200':
+          description: 역할 상세
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleDetailResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+    put:
+      tags: [role]
+      operationId: updateRole
+      summary: 역할 정보 수정 (ROL-05). 역할 코드는 바꿀 수 없다
+      description: 시스템 역할·내 역할은 ROLE_NOT_EDITABLE. 사용 안 함으로 바꾸면 그 역할의 권한이 최종 권한에서 빠진다 (BR-07)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleUpdateRequest'
+      responses:
+        '200':
+          description: 수정 완료
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmptyResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+    delete:
+      tags: [role]
+      operationId: deleteRole
+      summary: 역할 삭제 (ROL-07). 부여된 관리자가 없을 때만. 권한 매핑도 함께 지운다
+      responses:
+        '200':
+          description: 삭제 완료
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmptyResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /roles/{roleId}/permissions:
+    parameters:
+      - $ref: '#/components/parameters/RoleId'
+    get:
+      tags: [role]
+      operationId: getRolePermissions
+      summary: 권한 탭 (ROL-02). 메뉴 트리 × 액션
+      responses:
+        '200':
+          description: 메뉴 트리. 화면 메뉴마다 사용 액션·부여된 액션·내가 줄 수 있는 액션
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RolePermissionTreeResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+    put:
+      tags: [role]
+      operationId: saveRolePermissions
+      summary: 권한 설정 (ROL-06). 목록에 없는 메뉴는 권한을 모두 회수한다
+      description: 서버도 READ 자동 부여 규칙(BR-03)을 다시 적용한다. 내가 갖지 않은 권한을 추가하면 PRIVILEGE_ESCALATION
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RolePermissionSaveRequest'
+      responses:
+        '200':
+          description: 추가·제거된 권한
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RolePermissionSaveResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /roles/{roleId}/admins:
+    parameters:
+      - $ref: '#/components/parameters/RoleId'
+    get:
+      tags: [role]
+      operationId: getRoleAdmins
+      summary: 관리자 탭 (ROL-02). 이 역할을 가진 관리자
+      responses:
+        '200':
+          description: 관리자 목록 (부여일시 순)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleAdminListResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /roles/{roleId}/copy:
+    parameters:
+      - $ref: '#/components/parameters/RoleId'
+    post:
+      tags: [role]
+      operationId: copyRole
+      summary: 역할 복사 (ROL-04). 원본의 설명·권한을 그대로 가진 새 역할 (사용 여부 Y)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleCopyRequest'
+      responses:
+        '201':
+          description: 복사 완료
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleCreatedResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
 components:
   securitySchemes:
     bearerAuth:
@@ -636,6 +867,13 @@ components:
       description: Access Token (docs/04-features/09-auth.md 1.1)
 
   parameters:
+    RoleId:
+      name: roleId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
     MenuId:
       name: menuId
       in: path
@@ -1397,4 +1635,199 @@ components:
           required: [available]
           properties:
             available: { type: boolean }
+        error: { $ref: '#/components/schemas/NullError' }
+
+    # ---------------------------------------------------------------
+    # 역할관리 (docs/06-api/08-role.md)
+    # ---------------------------------------------------------------
+    RoleListItem:
+      type: object
+      required: [roleId, roleCd, roleNm, description, adminCnt, systemYn, useYn]
+      properties:
+        roleId: { type: integer, format: int64 }
+        roleCd: { type: string }
+        roleNm: { type: string }
+        description: { type: string, nullable: true }
+        adminCnt: { type: integer, description: 부여된 관리자 수 }
+        systemYn: { $ref: '#/components/schemas/YnFlag' }
+        useYn: { $ref: '#/components/schemas/YnFlag' }
+
+    RoleDetail:
+      type: object
+      required: [roleId, roleCd, roleNm, description, adminCnt, systemYn, useYn, mine, editable, regNm, regDt, modNm, modDt]
+      properties:
+        roleId: { type: integer, format: int64 }
+        roleCd: { type: string }
+        roleNm: { type: string }
+        description: { type: string, nullable: true }
+        adminCnt: { type: integer }
+        systemYn: { $ref: '#/components/schemas/YnFlag' }
+        useYn: { $ref: '#/components/schemas/YnFlag' }
+        mine: { type: boolean, description: 내가 가진 역할인지 }
+        editable:
+          type: boolean
+          description: 수정·권한 설정 가능 여부. 시스템 역할이거나 내 역할이면 false (슈퍼관리자는 내 역할도 true)
+        regNm: { type: string, nullable: true }
+        regDt: { $ref: '#/components/schemas/DateTime' }
+        modNm: { type: string, nullable: true }
+        modDt: { $ref: '#/components/schemas/DateTime' }
+
+    RoleListResponse:
+      type: object
+      required: [success, data, error]
+      properties:
+        success: { type: boolean, enum: [true] }
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/RoleListItem' }
+        error: { $ref: '#/components/schemas/NullError' }
+
+    RoleDetailResponse:
+      type: object
+      required: [success, data, error]
+      properties:
+        success: { type: boolean, enum: [true] }
+        data: { $ref: '#/components/schemas/RoleDetail' }
+        error: { $ref: '#/components/schemas/NullError' }
+
+    RoleCreateRequest:
+      type: object
+      required: [roleCd, roleNm, useYn]
+      additionalProperties: false
+      properties:
+        roleCd: { type: string, pattern: '^[A-Z0-9_]+$', maxLength: 50 }
+        roleNm: { type: string, minLength: 1, maxLength: 100 }
+        description: { type: string, nullable: true, maxLength: 500 }
+        useYn: { $ref: '#/components/schemas/YnFlag' }
+
+    RoleUpdateRequest:
+      type: object
+      required: [roleNm, useYn, modDt]
+      additionalProperties: false
+      properties:
+        roleNm: { type: string, minLength: 1, maxLength: 100 }
+        description: { type: string, nullable: true, maxLength: 500 }
+        useYn: { $ref: '#/components/schemas/YnFlag' }
+        modDt: { $ref: '#/components/schemas/DateTime' }
+
+    RoleCopyRequest:
+      type: object
+      required: [roleCd, roleNm]
+      additionalProperties: false
+      properties:
+        roleCd: { type: string, pattern: '^[A-Z0-9_]+$', maxLength: 50 }
+        roleNm: { type: string, minLength: 1, maxLength: 100 }
+
+    RoleCreatedResponse:
+      type: object
+      required: [success, data, error]
+      properties:
+        success: { type: boolean, enum: [true] }
+        data:
+          type: object
+          required: [roleId]
+          properties:
+            roleId: { type: integer, format: int64 }
+        error: { $ref: '#/components/schemas/NullError' }
+
+    RolePermissionNode:
+      type: object
+      required: [menuId, menuCd, menuNm, menuTypeCd, depth, useYn, actions, granted, grantableActions, children]
+      properties:
+        menuId: { type: integer, format: int64 }
+        menuCd: { type: string }
+        menuNm: { type: string }
+        menuTypeCd: { type: string, enum: [FOLDER, PAGE] }
+        depth: { type: integer, minimum: 1, maximum: 3 }
+        useYn: { $ref: '#/components/schemas/YnFlag' }
+        actions:
+          type: array
+          description: 메뉴의 사용 액션 (폴더는 빈 배열)
+          items: { $ref: '#/components/schemas/Action' }
+        granted:
+          type: array
+          description: 이 역할에 부여된 액션
+          items: { $ref: '#/components/schemas/Action' }
+        grantableActions:
+          type: array
+          description: 내가 줄 수 있는 액션 (BR-05). 슈퍼관리자면 사용 액션 전체
+          items: { $ref: '#/components/schemas/Action' }
+        children:
+          type: array
+          items: { $ref: '#/components/schemas/RolePermissionNode' }
+
+    RolePermissionTreeResponse:
+      type: object
+      required: [success, data, error]
+      properties:
+        success: { type: boolean, enum: [true] }
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/RolePermissionNode' }
+        error: { $ref: '#/components/schemas/NullError' }
+
+    RolePermissionSaveRequest:
+      type: object
+      required: [permissions, modDt]
+      additionalProperties: false
+      properties:
+        permissions:
+          type: array
+          description: 권한을 줄 메뉴만, 메뉴별 최종 액션 목록
+          items:
+            type: object
+            required: [menuId, actions]
+            additionalProperties: false
+            properties:
+              menuId: { type: integer, format: int64 }
+              actions:
+                type: array
+                items: { $ref: '#/components/schemas/Action' }
+        modDt: { $ref: '#/components/schemas/DateTime' }
+
+    PermissionChange:
+      type: object
+      required: [menuId, menuNm, action]
+      properties:
+        menuId: { type: integer, format: int64 }
+        menuNm: { type: string }
+        action: { $ref: '#/components/schemas/Action' }
+
+    RolePermissionSaveResponse:
+      type: object
+      required: [success, data, error]
+      properties:
+        success: { type: boolean, enum: [true] }
+        data:
+          type: object
+          required: [added, removed]
+          properties:
+            added:
+              type: array
+              items: { $ref: '#/components/schemas/PermissionChange' }
+            removed:
+              type: array
+              items: { $ref: '#/components/schemas/PermissionChange' }
+        error: { $ref: '#/components/schemas/NullError' }
+
+    RoleAdmin:
+      type: object
+      required: [adminId, loginId, adminNm, deptNm, statusCd, statusNm, grantedDt]
+      properties:
+        adminId: { type: integer, format: int64 }
+        loginId: { type: string }
+        adminNm: { type: string }
+        deptNm: { type: string, nullable: true }
+        statusCd: { type: string }
+        statusNm: { type: string, nullable: true }
+        grantedDt: { $ref: '#/components/schemas/DateTime' }
+
+    RoleAdminListResponse:
+      type: object
+      required: [success, data, error]
+      properties:
+        success: { type: boolean, enum: [true] }
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/RoleAdmin' }
         error: { $ref: '#/components/schemas/NullError' }

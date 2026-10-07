@@ -345,7 +345,7 @@ export function MenuPage() {
         </div>
       </div>
 
-      <Modal open={moveOpen} title="상위 메뉴 변경" onClose={() => setMoveOpen(false)}
+      <Modal id="move-modal" open={moveOpen} title="상위 메뉴 변경" onClose={() => setMoveOpen(false)}
              footer={<><button type="button" className="btn" data-bs-dismiss="modal">취소</button><button type="submit" form="move-form" className="btn btn-primary">이동</button></>}>
         <form className="modal-body" id="move-form" onSubmit={submitMove}>
           <label className="form-label" htmlFor="move-parent">옮길 위치</label>

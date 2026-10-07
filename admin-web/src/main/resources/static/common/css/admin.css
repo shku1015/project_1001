@@ -51,3 +51,12 @@
   color: var(--tblr-secondary, #6c757d);
   user-select: none;
 }
+
+/* 역할 권한 표 (docs/05-screens/08-role.md SCR-ROL-02). 메뉴 깊이만큼 들여 쓴다 */
+.perm-depth-2 {
+  padding-left: 1.75rem !important;
+}
+
+.perm-depth-3 {
+  padding-left: 3rem !important;
+}

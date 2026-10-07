@@ -11,7 +11,7 @@
             <div class="menu-node-row${m.menuId() == selectedId ? ' is-selected' : ''}${m.useYn() == 'N' ? ' is-unused' : ''}">
                 <span class="drag-handle" title="끌어서 순서 변경" aria-hidden="true">⠿</span>
                 <a class="menu-node-link" href="<c:url value='/ssr/menus?menu=${m.menuId()}'/>"><c:out value="${m.menuNm()}"/></a>
-                <c:if test="${m.systemYn() == 'Y'}"><span class="badge bg-secondary-lt" title="시스템 메뉴">🔒</span></c:if>
+                <c:if test="${m.systemYn() == 'Y'}"><span class="badge bg-secondary-lt" title="시스템 메뉴">&#x1F512;</span></c:if>
                 <c:if test="${m.boardAutoYn() == 'Y'}"><span class="badge bg-azure-lt">자동</span></c:if>
                 <span class="badge bg-yellow-lt changed-badge" hidden>변경됨</span>
             </div>

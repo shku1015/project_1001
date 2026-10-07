@@ -44,7 +44,7 @@
                                     data-group-cd="${g.groupCd()}">
                                     <td>
                                         <a href="<c:url value='/ssr/codes?group=${g.groupCd()}'/>">
-                                            <c:if test="${g.systemYn() == 'Y'}">🔒 </c:if><c:out value="${g.groupCd()}"/>
+                                            <c:if test="${g.systemYn() == 'Y'}">&#x1F512; </c:if><c:out value="${g.groupCd()}"/>
                                         </a>
                                     </td>
                                     <td><c:out value="${g.groupNm()}"/></td>
@@ -69,7 +69,7 @@
                         <div class="card">
                             <div class="card-header">
                                 <h3 class="card-title">
-                                    <c:if test="${selectedGroup.systemYn() == 'Y'}">🔒 </c:if><c:out value="${selectedGroup.groupNm()}"/>
+                                    <c:if test="${selectedGroup.systemYn() == 'Y'}">&#x1F512; </c:if><c:out value="${selectedGroup.groupNm()}"/>
                                     <span class="text-secondary ms-1">(<c:out value="${selectedGroup.groupCd()}"/>)</span>
                                 </h3>
                                 <div class="card-actions btn-list">

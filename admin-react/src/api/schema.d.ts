@@ -324,6 +324,126 @@ export interface paths {
         patch: operations["moveMenu"];
         trace?: never;
     };
+    "/roles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 역할 목록 (ROL-01). 페이징 없음, 등록순 */
+        get: operations["listRoles"];
+        put?: never;
+        /** 역할 등록 (ROL-03). 권한은 상세 화면에서 설정한다 */
+        post: operations["createRole"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/roles/check-role-cd": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 역할 코드 중복 확인 */
+        get: operations["checkRoleCd"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/roles/{roleId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                roleId: components["parameters"]["RoleId"];
+            };
+            cookie?: never;
+        };
+        /** 역할 상세 (ROL-02) */
+        get: operations["getRole"];
+        /**
+         * 역할 정보 수정 (ROL-05). 역할 코드는 바꿀 수 없다
+         * @description 시스템 역할·내 역할은 ROLE_NOT_EDITABLE. 사용 안 함으로 바꾸면 그 역할의 권한이 최종 권한에서 빠진다 (BR-07)
+         */
+        put: operations["updateRole"];
+        post?: never;
+        /** 역할 삭제 (ROL-07). 부여된 관리자가 없을 때만. 권한 매핑도 함께 지운다 */
+        delete: operations["deleteRole"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/roles/{roleId}/permissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                roleId: components["parameters"]["RoleId"];
+            };
+            cookie?: never;
+        };
+        /** 권한 탭 (ROL-02). 메뉴 트리 × 액션 */
+        get: operations["getRolePermissions"];
+        /**
+         * 권한 설정 (ROL-06). 목록에 없는 메뉴는 권한을 모두 회수한다
+         * @description 서버도 READ 자동 부여 규칙(BR-03)을 다시 적용한다. 내가 갖지 않은 권한을 추가하면 PRIVILEGE_ESCALATION
+         */
+        put: operations["saveRolePermissions"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/roles/{roleId}/admins": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                roleId: components["parameters"]["RoleId"];
+            };
+            cookie?: never;
+        };
+        /** 관리자 탭 (ROL-02). 이 역할을 가진 관리자 */
+        get: operations["getRoleAdmins"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/roles/{roleId}/copy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                roleId: components["parameters"]["RoleId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** 역할 복사 (ROL-04). 원본의 설명·권한을 그대로 가진 새 역할 (사용 여부 Y) */
+        post: operations["copyRole"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -675,6 +795,135 @@ export interface components {
             };
             error: components["schemas"]["NullError"];
         };
+        RoleListItem: {
+            /** Format: int64 */
+            roleId: number;
+            roleCd: string;
+            roleNm: string;
+            description: string | null;
+            /** @description 부여된 관리자 수 */
+            adminCnt: number;
+            systemYn: components["schemas"]["YnFlag"];
+            useYn: components["schemas"]["YnFlag"];
+        };
+        RoleDetail: {
+            /** Format: int64 */
+            roleId: number;
+            roleCd: string;
+            roleNm: string;
+            description: string | null;
+            adminCnt: number;
+            systemYn: components["schemas"]["YnFlag"];
+            useYn: components["schemas"]["YnFlag"];
+            /** @description 내가 가진 역할인지 */
+            mine: boolean;
+            /** @description 수정·권한 설정 가능 여부. 시스템 역할이거나 내 역할이면 false (슈퍼관리자는 내 역할도 true) */
+            editable: boolean;
+            regNm: string | null;
+            regDt: components["schemas"]["DateTime"];
+            modNm: string | null;
+            modDt: components["schemas"]["DateTime"];
+        };
+        RoleListResponse: {
+            /** @enum {boolean} */
+            success: true;
+            data: components["schemas"]["RoleListItem"][];
+            error: components["schemas"]["NullError"];
+        };
+        RoleDetailResponse: {
+            /** @enum {boolean} */
+            success: true;
+            data: components["schemas"]["RoleDetail"];
+            error: components["schemas"]["NullError"];
+        };
+        RoleCreateRequest: {
+            roleCd: string;
+            roleNm: string;
+            description?: string | null;
+            useYn: components["schemas"]["YnFlag"];
+        };
+        RoleUpdateRequest: {
+            roleNm: string;
+            description?: string | null;
+            useYn: components["schemas"]["YnFlag"];
+            modDt: components["schemas"]["DateTime"];
+        };
+        RoleCopyRequest: {
+            roleCd: string;
+            roleNm: string;
+        };
+        RoleCreatedResponse: {
+            /** @enum {boolean} */
+            success: true;
+            data: {
+                /** Format: int64 */
+                roleId: number;
+            };
+            error: components["schemas"]["NullError"];
+        };
+        RolePermissionNode: {
+            /** Format: int64 */
+            menuId: number;
+            menuCd: string;
+            menuNm: string;
+            /** @enum {string} */
+            menuTypeCd: "FOLDER" | "PAGE";
+            depth: number;
+            useYn: components["schemas"]["YnFlag"];
+            /** @description 메뉴의 사용 액션 (폴더는 빈 배열) */
+            actions: components["schemas"]["Action"][];
+            /** @description 이 역할에 부여된 액션 */
+            granted: components["schemas"]["Action"][];
+            /** @description 내가 줄 수 있는 액션 (BR-05). 슈퍼관리자면 사용 액션 전체 */
+            grantableActions: components["schemas"]["Action"][];
+            children: components["schemas"]["RolePermissionNode"][];
+        };
+        RolePermissionTreeResponse: {
+            /** @enum {boolean} */
+            success: true;
+            data: components["schemas"]["RolePermissionNode"][];
+            error: components["schemas"]["NullError"];
+        };
+        RolePermissionSaveRequest: {
+            /** @description 권한을 줄 메뉴만, 메뉴별 최종 액션 목록 */
+            permissions: {
+                /** Format: int64 */
+                menuId: number;
+                actions: components["schemas"]["Action"][];
+            }[];
+            modDt: components["schemas"]["DateTime"];
+        };
+        PermissionChange: {
+            /** Format: int64 */
+            menuId: number;
+            menuNm: string;
+            action: components["schemas"]["Action"];
+        };
+        RolePermissionSaveResponse: {
+            /** @enum {boolean} */
+            success: true;
+            data: {
+                added: components["schemas"]["PermissionChange"][];
+                removed: components["schemas"]["PermissionChange"][];
+            };
+            error: components["schemas"]["NullError"];
+        };
+        RoleAdmin: {
+            /** Format: int64 */
+            adminId: number;
+            loginId: string;
+            adminNm: string;
+            deptNm: string | null;
+            statusCd: string;
+            statusNm: string | null;
+            grantedDt: components["schemas"]["DateTime"];
+        };
+        RoleAdminListResponse: {
+            /** @enum {boolean} */
+            success: true;
+            data: components["schemas"]["RoleAdmin"][];
+            error: components["schemas"]["NullError"];
+        };
     };
     responses: {
         /** @description 입력값 오류 (VALIDATION_ERROR, INVALID_REQUEST) */
@@ -733,6 +982,7 @@ export interface components {
         };
     };
     parameters: {
+        RoleId: number;
         MenuId: number;
         GroupCd: string;
         /** @description 페이지 번호 (1부터) */
@@ -1464,6 +1714,298 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EmptyResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    listRoles: {
+        parameters: {
+            query?: {
+                /** @description 역할 코드·역할명 */
+                keyword?: string;
+                useYn?: components["schemas"]["YnFlag"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 역할 목록 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoleListResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    createRole: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RoleCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description 등록 완료 */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoleCreatedResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    checkRoleCd: {
+        parameters: {
+            query: {
+                roleCd: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 사용할 수 있으면 available=true */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AvailabilityResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    getRole: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                roleId: components["parameters"]["RoleId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 역할 상세 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoleDetailResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    updateRole: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                roleId: components["parameters"]["RoleId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RoleUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description 수정 완료 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmptyResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    deleteRole: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                roleId: components["parameters"]["RoleId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 삭제 완료 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmptyResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    getRolePermissions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                roleId: components["parameters"]["RoleId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 메뉴 트리. 화면 메뉴마다 사용 액션·부여된 액션·내가 줄 수 있는 액션 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RolePermissionTreeResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    saveRolePermissions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                roleId: components["parameters"]["RoleId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RolePermissionSaveRequest"];
+            };
+        };
+        responses: {
+            /** @description 추가·제거된 권한 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RolePermissionSaveResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    getRoleAdmins: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                roleId: components["parameters"]["RoleId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 관리자 목록 (부여일시 순) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoleAdminListResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    copyRole: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                roleId: components["parameters"]["RoleId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RoleCopyRequest"];
+            };
+        };
+        responses: {
+            /** @description 복사 완료 */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoleCreatedResponse"];
                 };
             };
             400: components["responses"]["BadRequest"];

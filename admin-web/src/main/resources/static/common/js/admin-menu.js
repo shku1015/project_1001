@@ -140,7 +140,7 @@
         html += '<button type="button" class="btn" id="btn-child-create" data-structure-action>하위 메뉴 추가</button>';
       }
       if (!prot) {
-        html += '<button type="button" class="btn" id="btn-move" data-structure-action>상위 메뉴 변경</button>';
+        html += '<button type="button" class="btn" id="btn-move" data-bs-toggle="modal" data-bs-target="#move-modal" data-structure-action>상위 메뉴 변경</button>';
       }
     }
     html += '</div></form>';
@@ -168,8 +168,6 @@
     form.addEventListener('submit', function (e) { e.preventDefault(); save(form); });
     var child = document.getElementById('btn-child-create');
     if (child) { child.addEventListener('click', function () { startCreate(state.selected); }); }
-    var move = document.getElementById('btn-move');
-    if (move) { move.addEventListener('click', openMove); }
     var del = document.getElementById('btn-delete');
     if (del) { del.addEventListener('click', remove); }
   }
@@ -243,6 +241,7 @@
 
   // ===================== 상위 메뉴 변경 =====================
 
+  /** 모달은 data-bs-toggle로 연다 (Tabler가 window.bootstrap을 노출하지 않는다). 열릴 때 옮길 위치를 채운다 */
   function openMove() {
     var select = document.getElementById('move-parent');
     select.innerHTML = '<option value="">(최상위)</option>';
@@ -258,13 +257,12 @@
         walk(n.children);
       });
     })(tree);
-    bootstrap.Modal.getOrCreateInstance(document.getElementById('move-modal')).show();
   }
 
   async function submitMove(e) {
     e.preventDefault();
     var value = document.getElementById('move-parent').value;
-    bootstrap.Modal.getOrCreateInstance(document.getElementById('move-modal')).hide();
+    document.querySelector('#move-modal [data-bs-dismiss="modal"]').click();
     try {
       await AdminApi.patch('/menus/' + state.selected.menuId + '/parent',
           { parentMenuId: value ? Number(value) : null, modDt: state.selected.modDt });
@@ -330,6 +328,7 @@
     document.getElementById('btn-order-save').addEventListener('click', saveOrder);
     document.getElementById('btn-order-reset').addEventListener('click', AdminMenuTree.reset);
     document.getElementById('move-form').addEventListener('submit', submitMove);
+    document.getElementById('move-modal').addEventListener('show.bs.modal', openMove);
     document.getElementById('menu-tree-root').addEventListener('click', function (e) {
       var link = e.target.closest('[data-select]');
       if (!link) { return; }

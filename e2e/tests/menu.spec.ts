@@ -131,3 +131,18 @@ test('순서를 바꾼 뒤 되돌리기를 누르면 원래 순서로 돌아간�
   expect(await childNames(page, '시스템관리')).toEqual(before)
   await expect(page.locator('#btn-root-create')).toBeEnabled()
 })
+
+test('상위 메뉴 변경으로 다른 폴더로 옮긴다', async ({ page }) => {
+  await login(page)
+  await gotoMenus(page)
+  const name = `E2E 가 ${front()}`
+  await select(page, name)
+
+  await page.locator('#btn-move').click()
+  await expect(page.locator('#move-modal')).toBeVisible()
+  await page.locator('#move-parent').selectOption({ label: '회원관리' })
+  await page.locator('#move-modal').getByRole('button', { name: '이동' }).click()
+  await expect(page.getByRole('status')).toContainText('이동했습니다')
+  await expect(page.locator('#menu-parent')).toHaveValue('회원관리')
+  expect(await childNames(page, '회원관리')).toContain(name)
+})
