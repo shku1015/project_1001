@@ -75,8 +75,9 @@ class CodeApiTest {
         assertThat(jdbc.queryForObject("SELECT group_nm FROM tb_code_group WHERE group_cd = ?", String.class, g))
                 .isEqualTo("테스트그룹");
 
-        String modDt = JsonPath.read(mockMvc.perform(get("/api/v1/code-groups/" + g).header("Authorization", system))
-                .andReturn().getResponse().getContentAsString(), "$.data.modDt");
+        // 그룹 상세 응답도 명세와 대조한다 (isSystem() 같은 편의 메서드가 JSON에 섞이지 않는지)
+        String modDt = JsonPath.read(ok(get("/api/v1/code-groups/" + g).header("Authorization", system))
+                .getResponse().getContentAsString(), "$.data.modDt");
         ok(put("/api/v1/code-groups/" + g).header("Authorization", system).contentType(MediaType.APPLICATION_JSON)
                 .content(("{\"groupNm\":\"바뀐그룹\",\"useYn\":\"N\",\"modDt\":\"" + modDt + "\"}")));
         assertThat(jdbc.queryForObject("SELECT group_nm FROM tb_code_group WHERE group_cd = ?", String.class, g))

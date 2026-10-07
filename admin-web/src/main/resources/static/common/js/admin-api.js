@@ -86,6 +86,7 @@
     post: function (path, body) { return request('POST', path, body); },
     put: function (path, body) { return request('PUT', path, body); },
     del: function (path, body) { return request('DELETE', path, body); },
+    patch: function (path, body) { return request('PATCH', path, body); },
     async changePassword(currentPassword, newPassword) {
       var token = await request('PUT', '/me/password', { currentPassword: currentPassword, newPassword: newPassword });
       accessToken = token.accessToken;

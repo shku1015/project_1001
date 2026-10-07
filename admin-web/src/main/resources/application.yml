@@ -67,6 +67,7 @@ app:
     location: ${REACT_DIST:file:../admin-react/dist/}
   ui:
     tabler-version: 1.6.1
+    sortablejs-version: 1.15.7
   auth:
     # 비밀값은 환경 변수로만 넣는다 (공개 저장소)
     jwt-secret: ${JWT_SECRET:}

@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.admin.menu.MenuAdminMapper">
+
+    <sql id="menuColumns">
+        m.menu_id, m.parent_menu_id, p.menu_nm AS parent_menu_nm, m.menu_cd, m.menu_nm, m.menu_type_cd, m.menu_url,
+        m.icon, m.depth, m.sort_ord, m.use_yn, m.system_yn,
+        CASE WHEN EXISTS (SELECT 1 FROM tb_board_master b WHERE b.menu_id = m.menu_id AND b.del_yn = 'N')
+             THEN 'Y' ELSE 'N' END AS board_auto_yn,
+        m.mod_dt
+    </sql>
+
+    <select id="selectAllMenus" resultType="egovframework.admin.menu.MenuAdminMapper$MenuRow">
+        SELECT <include refid="menuColumns"/>
+        FROM tb_menu m LEFT JOIN tb_menu p ON p.menu_id = m.parent_menu_id
+        ORDER BY m.depth, m.sort_ord, m.menu_id
+    </select>
+
+    <select id="selectMenu" resultType="egovframework.admin.menu.MenuAdminMapper$MenuRow">
+        SELECT <include refid="menuColumns"/>
+        FROM tb_menu m LEFT JOIN tb_menu p ON p.menu_id = m.parent_menu_id
+        WHERE m.menu_id = #{menuId}
+    </select>
+
+    <select id="selectActions" resultType="string">
+        SELECT action_cd FROM tb_permission WHERE menu_id = #{menuId}
+        ORDER BY CASE action_cd WHEN 'READ' THEN 1 WHEN 'CREATE' THEN 2 WHEN 'UPDATE' THEN 3
+                                WHEN 'DELETE' THEN 4 WHEN 'EXCEL' THEN 5 ELSE 6 END
+    </select>
+
+    <select id="existsMenuCd" resultType="boolean">
+        SELECT EXISTS (SELECT 1 FROM tb_menu WHERE menu_cd = #{menuCd})
+    </select>
+
+    <select id="selectMaxSortOrd" resultType="java.lang.Integer">
+        SELECT max(sort_ord) FROM tb_menu
+        WHERE <choose>
+            <when test="parentMenuId == null">parent_menu_id IS NULL</when>
+            <otherwise>parent_menu_id = #{parentMenuId}</otherwise>
+        </choose>
+    </select>
+
+    <select id="insertMenu" resultType="long" flushCache="true">
+        INSERT INTO tb_menu (parent_menu_id, menu_cd, menu_nm, menu_type_cd, menu_url, icon, depth, sort_ord, use_yn,
+                             system_yn, reg_id, mod_id)
+        VALUES (#{parentMenuId}, #{menuCd}, #{menuNm}, #{menuTypeCd}, #{menuUrl}, #{icon}, #{depth}, #{sortOrd},
+                #{useYn}, 'N', #{regId}, #{regId})
+        RETURNING menu_id
+    </select>
+
+    <insert id="insertPermissions">
+        INSERT INTO tb_permission (menu_id, action_cd)
+        VALUES
+        <foreach collection="actions" item="a" separator=",">(#{menuId}, #{a})</foreach>
+        ON CONFLICT (menu_id, action_cd) DO NOTHING
+    </insert>
+
+    <sql id="actionFilter">
+        <if test="actions != null">
+            AND p.action_cd IN <foreach collection="actions" item="a" open="(" separator="," close=")">#{a}</foreach>
+        </if>
+    </sql>
+
+    <select id="selectGrants" resultType="egovframework.admin.menu.MenuAdminMapper$GrantRow">
+        SELECT r.role_id, r.role_nm, p.action_cd
+        FROM tb_permission p
+        JOIN tb_role_permission rp ON rp.perm_id = p.perm_id
+        JOIN tb_role r ON r.role_id = rp.role_id
+        WHERE p.menu_id = #{menuId}
+        <include refid="actionFilter"/>
+        ORDER BY r.role_id, p.perm_id
+    </select>
+
+    <delete id="deleteRolePermissions">
+        DELETE FROM tb_role_permission rp
+        USING tb_permission p
+        WHERE rp.perm_id = p.perm_id AND p.menu_id = #{menuId}
+        <include refid="actionFilter"/>
+    </delete>
+
+    <delete id="deletePermissions">
+        DELETE FROM tb_permission p WHERE p.menu_id = #{menuId}
+        <include refid="actionFilter"/>
+    </delete>
+
+    <!-- 동시 수정 방지: 조회했던 mod_dt와 초 단위로 같을 때만 고친다 -->
+    <update id="updateMenu">
+        UPDATE tb_menu
+        SET menu_nm = #{menuNm}, menu_url = #{menuUrl}, icon = #{icon}, use_yn = #{useYn},
+            mod_id = #{modId}, mod_dt = now()
+        WHERE menu_id = #{menuId}
+          AND date_trunc('second', mod_dt) = date_trunc('second', #{modDt}::timestamp)
+    </update>
+
+    <update id="updateParent">
+        UPDATE tb_menu
+        SET parent_menu_id = #{parentMenuId}, depth = #{depth}, sort_ord = #{sortOrd},
+            mod_id = #{modId}, mod_dt = now()
+        WHERE menu_id = #{menuId}
+          AND date_trunc('second', mod_dt) = date_trunc('second', #{modDt}::timestamp)
+    </update>
+
+    <sql id="subtree">
+        WITH RECURSIVE subtree AS (
+            SELECT menu_id, depth FROM tb_menu WHERE menu_id = #{menuId}
+            UNION ALL
+            SELECT c.menu_id, c.depth FROM tb_menu c JOIN subtree s ON c.parent_menu_id = s.menu_id
+        )
+    </sql>
+
+    <update id="shiftDescendantDepth">
+        <include refid="subtree"/>
+        UPDATE tb_menu SET depth = depth + #{delta}
+        WHERE menu_id IN (SELECT menu_id FROM subtree) AND menu_id &lt;&gt; #{menuId}
+    </update>
+
+    <select id="selectSubtreeIds" resultType="long">
+        <include refid="subtree"/>
+        SELECT menu_id FROM subtree
+    </select>
+
+    <select id="selectSubtreeMaxDepth" resultType="int">
+        <include refid="subtree"/>
+        SELECT max(depth) FROM subtree
+    </select>
+
+    <select id="selectChildIds" resultType="long">
+        SELECT menu_id FROM tb_menu
+        WHERE <choose>
+            <when test="parentMenuId == null">parent_menu_id IS NULL</when>
+            <otherwise>parent_menu_id = #{parentMenuId}</otherwise>
+        </choose>
+    </select>
+
+    <update id="updateSortOrd">
+        UPDATE tb_menu SET sort_ord = #{sortOrd} WHERE menu_id = #{menuId}
+    </update>
+
+    <select id="countChildren" resultType="int">
+        SELECT count(*) FROM tb_menu WHERE parent_menu_id = #{menuId}
+    </select>
+
+    <delete id="deleteMenu">
+        DELETE FROM tb_menu WHERE menu_id = #{menuId}
+    </delete>
+</mapper>

@@ -4,6 +4,7 @@ import { HomePage } from './pages/HomePage'
 import { LoginPage } from './pages/LoginPage'
 import { CodePage } from './pages/CodePage'
 import { MePage } from './pages/MePage'
+import { MenuPage } from './pages/MenuPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 import { PasswordPage } from './pages/PasswordPage'
 
@@ -14,6 +15,7 @@ export function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/" element={<RequireAuth><HomePage /></RequireAuth>} />
       <Route path="/me" element={<RequireAuth><MePage /></RequireAuth>} />
+      <Route path="/menus" element={<RequireAuth><MenuPage /></RequireAuth>} />
       <Route path="/codes" element={<RequireAuth><CodePage /></RequireAuth>} />
       <Route path="/password" element={<RequireAuth allowTempPassword><PasswordPage /></RequireAuth>} />
       <Route path="*" element={<RequireAuth><NotFoundPage /></RequireAuth>} />
