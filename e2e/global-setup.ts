@@ -56,6 +56,9 @@ export default async function globalSetup() {
       await createAdmin(client, `e2e_temp_${front}`, password, true)
       await createAdmin(client, `e2e_me_${front}`, password, false)
       await createOrderMenus(client, front)
+      // 권한관리 시나리오용 역할 (권한 없음)
+      await client.query("INSERT INTO tb_role (role_cd, role_nm) VALUES ($1::text, $2::text)",
+        [`E2E_${front.toUpperCase()}_PRM`, `E2E 권한 ${front}`])
     }
     await client.query('COMMIT')
   } catch (e) {

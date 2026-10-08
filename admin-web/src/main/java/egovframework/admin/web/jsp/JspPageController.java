@@ -60,6 +60,11 @@ public class JspPageController {
         return "jsp/code";
     }
 
+    @GetMapping("/jsp/permissions")
+    public String permissions() {
+        return "jsp/permission";
+    }
+
     @GetMapping("/jsp/roles")
     public String roles() {
         return "jsp/role-list";

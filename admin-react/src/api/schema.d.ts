@@ -444,6 +444,65 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/permissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 권한 목록 (PRM-01). 메뉴 트리 순서로 메뉴별 사용 액션 */
+        get: operations["getPermissionTree"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/permissions/menus/{menuId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                menuId: components["parameters"]["MenuId"];
+            };
+            cookie?: never;
+        };
+        /** 메뉴의 역할 × 액션 (PRM-02). 화면 메뉴만 (폴더면 MENU_NOT_PAGE) */
+        get: operations["getMenuRoleGrants"];
+        /**
+         * 메뉴 기준 부여·회수 (PRM-03). 바뀐 역할만, 역할별 최종 액션 목록을 보낸다
+         * @description 서버도 READ 자동 부여·회수(BR-02)를 다시 적용한다. 시스템 역할·내 역할은 ROLE_NOT_EDITABLE, 내가 갖지 않은 권한 부여는 PRIVILEGE_ESCALATION
+         */
+        put: operations["saveMenuRoleGrants"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/permissions/admins/{adminId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                adminId: number;
+            };
+            cookie?: never;
+        };
+        /** 관리자별 최종 권한 (PRM-04). 사용 중인 역할의 권한을 합친 결과 (확인용) */
+        get: operations["getAdminEffectivePermissions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -922,6 +981,111 @@ export interface components {
             /** @enum {boolean} */
             success: true;
             data: components["schemas"]["RoleAdmin"][];
+            error: components["schemas"]["NullError"];
+        };
+        PermissionMenuNode: {
+            /** Format: int64 */
+            menuId: number;
+            menuCd: string;
+            menuNm: string;
+            /** @enum {string} */
+            menuTypeCd: "FOLDER" | "PAGE";
+            depth: number;
+            useYn: components["schemas"]["YnFlag"];
+            /** @description 사용 액션 (폴더는 빈 배열) */
+            actions: components["schemas"]["Action"][];
+            children: components["schemas"]["PermissionMenuNode"][];
+        };
+        PermissionTreeResponse: {
+            /** @enum {boolean} */
+            success: true;
+            data: components["schemas"]["PermissionMenuNode"][];
+            error: components["schemas"]["NullError"];
+        };
+        MenuRoleGrant: {
+            /** Format: int64 */
+            roleId: number;
+            roleCd: string;
+            roleNm: string;
+            systemYn: components["schemas"]["YnFlag"];
+            useYn: components["schemas"]["YnFlag"];
+            /** @description 내가 가진 역할인지 */
+            mine: boolean;
+            /** @description 시스템 역할이거나 내 역할이면 false (BR-03, BR-04). 슈퍼관리자는 내 역할도 true */
+            editable: boolean;
+            /** @description 이 메뉴에서 부여된 액션. 시스템 역할(슈퍼관리자)은 사용 액션 전체 */
+            granted: components["schemas"]["Action"][];
+        };
+        MenuRoleGrantResponse: {
+            /** @enum {boolean} */
+            success: true;
+            data: {
+                menu: {
+                    /** Format: int64 */
+                    menuId: number;
+                    menuCd: string;
+                    menuNm: string;
+                    actions: components["schemas"]["Action"][];
+                };
+                /** @description 역할 전체 (등록순). 사용 안 함 역할 포함 */
+                roles: components["schemas"]["MenuRoleGrant"][];
+                /** @description 내가 이 메뉴에서 가진 액션 (BR-05). 슈퍼관리자면 사용 액션 전체 */
+                grantableActions: components["schemas"]["Action"][];
+            };
+            error: components["schemas"]["NullError"];
+        };
+        MenuRoleGrantSaveRequest: {
+            roles: {
+                /** Format: int64 */
+                roleId: number;
+                /** @description 이 메뉴에서 이 역할의 최종 액션 목록 */
+                actions: components["schemas"]["Action"][];
+            }[];
+        };
+        RoleGrantChange: {
+            /** Format: int64 */
+            roleId: number;
+            roleNm: string;
+            added: components["schemas"]["Action"][];
+            removed: components["schemas"]["Action"][];
+        };
+        MenuRoleGrantSaveResponse: {
+            /** @enum {boolean} */
+            success: true;
+            data: {
+                /** @description 실제로 바뀐 역할만 */
+                changes: components["schemas"]["RoleGrantChange"][];
+            };
+            error: components["schemas"]["NullError"];
+        };
+        EffectivePermissionMenu: {
+            /** Format: int64 */
+            menuId: number;
+            menuNm: string;
+            /** @enum {string} */
+            menuTypeCd: "FOLDER" | "PAGE";
+            depth: number;
+            actions: components["schemas"]["Action"][];
+            /** @description 액션 → 그 권한을 준 역할 이름 목록. 없는 액션은 키가 없다 */
+            granted: {
+                [key: string]: string[];
+            };
+        };
+        AdminEffectivePermissionResponse: {
+            /** @enum {boolean} */
+            success: true;
+            data: {
+                admin: {
+                    /** Format: int64 */
+                    adminId: number;
+                    loginId: string;
+                    adminNm: string;
+                };
+                /** @description true면 모든 권한을 가진다 (menus는 빈 배열) */
+                superAdmin: boolean;
+                /** @description 메뉴 트리 순서 (depth로 들여쓰기) */
+                menus: components["schemas"]["EffectivePermissionMenu"][];
+            };
             error: components["schemas"]["NullError"];
         };
     };
@@ -2009,6 +2173,117 @@ export interface operations {
                 };
             };
             400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    getPermissionTree: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 메뉴 트리 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PermissionTreeResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    getMenuRoleGrants: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                menuId: components["parameters"]["MenuId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 메뉴, 역할별 부여 액션, 내가 줄 수 있는 액션 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MenuRoleGrantResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    saveMenuRoleGrants: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                menuId: components["parameters"]["MenuId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MenuRoleGrantSaveRequest"];
+            };
+        };
+        responses: {
+            /** @description 역할별 추가·제거된 액션 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MenuRoleGrantSaveResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    getAdminEffectivePermissions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                adminId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 메뉴 트리 순서의 메뉴 목록과 액션별로 권한을 준 역할 이름 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminEffectivePermissionResponse"];
+                };
+            };
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];

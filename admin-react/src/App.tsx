@@ -7,6 +7,7 @@ import { MePage } from './pages/MePage'
 import { MenuPage } from './pages/MenuPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 import { PasswordPage } from './pages/PasswordPage'
+import { PermissionPage } from './pages/PermissionPage'
 import { RoleDetailPage } from './pages/RoleDetailPage'
 import { RoleFormPage } from './pages/RoleFormPage'
 import { RoleListPage } from './pages/RoleListPage'
@@ -19,6 +20,7 @@ export function App() {
       <Route path="/" element={<RequireAuth><HomePage /></RequireAuth>} />
       <Route path="/me" element={<RequireAuth><MePage /></RequireAuth>} />
       <Route path="/menus" element={<RequireAuth><MenuPage /></RequireAuth>} />
+      <Route path="/permissions" element={<RequireAuth><PermissionPage /></RequireAuth>} />
       <Route path="/roles" element={<RequireAuth><RoleListPage /></RequireAuth>} />
       <Route path="/roles/new" element={<RequireAuth><RoleFormPage /></RequireAuth>} />
       <Route path="/roles/:roleId" element={<RequireAuth><RoleDetailPage /></RequireAuth>} />

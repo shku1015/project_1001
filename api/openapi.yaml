@@ -24,6 +24,8 @@ tags:
     description: 메뉴관리 (docs/06-api/03-menu.md)
   - name: role
     description: 역할관리 (docs/06-api/08-role.md)
+  - name: permission
+    description: 권한관리 (docs/06-api/07-permission.md)
 
 paths:
   /auth/token:
@@ -852,6 +854,93 @@ paths:
               schema:
                 $ref: '#/components/schemas/RoleCreatedResponse'
         '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /permissions:
+    get:
+      tags: [permission]
+      operationId: getPermissionTree
+      summary: 권한 목록 (PRM-01). 메뉴 트리 순서로 메뉴별 사용 액션
+      responses:
+        '200':
+          description: 메뉴 트리
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionTreeResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /permissions/menus/{menuId}:
+    parameters:
+      - $ref: '#/components/parameters/MenuId'
+    get:
+      tags: [permission]
+      operationId: getMenuRoleGrants
+      summary: 메뉴의 역할 × 액션 (PRM-02). 화면 메뉴만 (폴더면 MENU_NOT_PAGE)
+      responses:
+        '200':
+          description: 메뉴, 역할별 부여 액션, 내가 줄 수 있는 액션
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MenuRoleGrantResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+    put:
+      tags: [permission]
+      operationId: saveMenuRoleGrants
+      summary: 메뉴 기준 부여·회수 (PRM-03). 바뀐 역할만, 역할별 최종 액션 목록을 보낸다
+      description: 서버도 READ 자동 부여·회수(BR-02)를 다시 적용한다. 시스템 역할·내 역할은 ROLE_NOT_EDITABLE, 내가 갖지 않은 권한 부여는 PRIVILEGE_ESCALATION
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MenuRoleGrantSaveRequest'
+      responses:
+        '200':
+          description: 역할별 추가·제거된 액션
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MenuRoleGrantSaveResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /permissions/admins/{adminId}:
+    parameters:
+      - name: adminId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    get:
+      tags: [permission]
+      operationId: getAdminEffectivePermissions
+      summary: 관리자별 최종 권한 (PRM-04). 사용 중인 역할의 권한을 합친 결과 (확인용)
+      responses:
+        '200':
+          description: 메뉴 트리 순서의 메뉴 목록과 액션별로 권한을 준 역할 이름
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminEffectivePermissionResponse'
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
@@ -1830,4 +1919,172 @@ components:
         data:
           type: array
           items: { $ref: '#/components/schemas/RoleAdmin' }
+        error: { $ref: '#/components/schemas/NullError' }
+
+    # ---------------------------------------------------------------
+    # 권한관리 (docs/06-api/07-permission.md)
+    # ---------------------------------------------------------------
+    PermissionMenuNode:
+      type: object
+      required: [menuId, menuCd, menuNm, menuTypeCd, depth, useYn, actions, children]
+      properties:
+        menuId: { type: integer, format: int64 }
+        menuCd: { type: string }
+        menuNm: { type: string }
+        menuTypeCd: { type: string, enum: [FOLDER, PAGE] }
+        depth: { type: integer, minimum: 1, maximum: 3 }
+        useYn: { $ref: '#/components/schemas/YnFlag' }
+        actions:
+          type: array
+          description: 사용 액션 (폴더는 빈 배열)
+          items: { $ref: '#/components/schemas/Action' }
+        children:
+          type: array
+          items: { $ref: '#/components/schemas/PermissionMenuNode' }
+
+    PermissionTreeResponse:
+      type: object
+      required: [success, data, error]
+      properties:
+        success: { type: boolean, enum: [true] }
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/PermissionMenuNode' }
+        error: { $ref: '#/components/schemas/NullError' }
+
+    MenuRoleGrant:
+      type: object
+      required: [roleId, roleCd, roleNm, systemYn, useYn, mine, editable, granted]
+      properties:
+        roleId: { type: integer, format: int64 }
+        roleCd: { type: string }
+        roleNm: { type: string }
+        systemYn: { $ref: '#/components/schemas/YnFlag' }
+        useYn: { $ref: '#/components/schemas/YnFlag' }
+        mine: { type: boolean, description: 내가 가진 역할인지 }
+        editable:
+          type: boolean
+          description: 시스템 역할이거나 내 역할이면 false (BR-03, BR-04). 슈퍼관리자는 내 역할도 true
+        granted:
+          type: array
+          description: 이 메뉴에서 부여된 액션. 시스템 역할(슈퍼관리자)은 사용 액션 전체
+          items: { $ref: '#/components/schemas/Action' }
+
+    MenuRoleGrantResponse:
+      type: object
+      required: [success, data, error]
+      properties:
+        success: { type: boolean, enum: [true] }
+        data:
+          type: object
+          required: [menu, roles, grantableActions]
+          properties:
+            menu:
+              type: object
+              required: [menuId, menuCd, menuNm, actions]
+              properties:
+                menuId: { type: integer, format: int64 }
+                menuCd: { type: string }
+                menuNm: { type: string }
+                actions:
+                  type: array
+                  items: { $ref: '#/components/schemas/Action' }
+            roles:
+              type: array
+              description: 역할 전체 (등록순). 사용 안 함 역할 포함
+              items: { $ref: '#/components/schemas/MenuRoleGrant' }
+            grantableActions:
+              type: array
+              description: 내가 이 메뉴에서 가진 액션 (BR-05). 슈퍼관리자면 사용 액션 전체
+              items: { $ref: '#/components/schemas/Action' }
+        error: { $ref: '#/components/schemas/NullError' }
+
+    MenuRoleGrantSaveRequest:
+      type: object
+      required: [roles]
+      additionalProperties: false
+      properties:
+        roles:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [roleId, actions]
+            additionalProperties: false
+            properties:
+              roleId: { type: integer, format: int64 }
+              actions:
+                type: array
+                description: 이 메뉴에서 이 역할의 최종 액션 목록
+                items: { $ref: '#/components/schemas/Action' }
+
+    RoleGrantChange:
+      type: object
+      required: [roleId, roleNm, added, removed]
+      properties:
+        roleId: { type: integer, format: int64 }
+        roleNm: { type: string }
+        added:
+          type: array
+          items: { $ref: '#/components/schemas/Action' }
+        removed:
+          type: array
+          items: { $ref: '#/components/schemas/Action' }
+
+    MenuRoleGrantSaveResponse:
+      type: object
+      required: [success, data, error]
+      properties:
+        success: { type: boolean, enum: [true] }
+        data:
+          type: object
+          required: [changes]
+          properties:
+            changes:
+              type: array
+              description: 실제로 바뀐 역할만
+              items: { $ref: '#/components/schemas/RoleGrantChange' }
+        error: { $ref: '#/components/schemas/NullError' }
+
+    EffectivePermissionMenu:
+      type: object
+      required: [menuId, menuNm, menuTypeCd, depth, actions, granted]
+      properties:
+        menuId: { type: integer, format: int64 }
+        menuNm: { type: string }
+        menuTypeCd: { type: string, enum: [FOLDER, PAGE] }
+        depth: { type: integer, minimum: 1, maximum: 3 }
+        actions:
+          type: array
+          items: { $ref: '#/components/schemas/Action' }
+        granted:
+          type: object
+          description: 액션 → 그 권한을 준 역할 이름 목록. 없는 액션은 키가 없다
+          additionalProperties:
+            type: array
+            items: { type: string }
+
+    AdminEffectivePermissionResponse:
+      type: object
+      required: [success, data, error]
+      properties:
+        success: { type: boolean, enum: [true] }
+        data:
+          type: object
+          required: [admin, superAdmin, menus]
+          properties:
+            admin:
+              type: object
+              required: [adminId, loginId, adminNm]
+              properties:
+                adminId: { type: integer, format: int64 }
+                loginId: { type: string }
+                adminNm: { type: string }
+            superAdmin:
+              type: boolean
+              description: true면 모든 권한을 가진다 (menus는 빈 배열)
+            menus:
+              type: array
+              description: 메뉴 트리 순서 (depth로 들여쓰기)
+              items: { $ref: '#/components/schemas/EffectivePermissionMenu' }
         error: { $ref: '#/components/schemas/NullError' }
