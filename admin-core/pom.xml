@@ -16,6 +16,11 @@
     <description>업무 로직 (화면·인증 방식과 무관): Service, Mapper, 공통, DB 마이그레이션</description>
 
     <dependencies>
+        <!-- 엑셀 다운로드 (Apache POI SXSSF) -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+        </dependency>
         <!-- 전자정부프레임워크 실행환경 -->
         <dependency>
             <groupId>org.egovframe.rte</groupId>

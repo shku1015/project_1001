@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.admin.company.CompanyMapper">
+
+    <!-- 소속 회원 수: 삭제 회원 제외 (탈퇴 회원 포함) -->
+    <sql id="memberCnt">
+        (SELECT count(*) FROM tb_user u WHERE u.company_id = c.company_id AND u.del_yn = 'N')::int
+    </sql>
+
+    <sql id="searchWhere">
+        WHERE c.del_yn = 'N'
+        <if test="s.companyNm != null and s.companyNm != ''">AND c.company_nm ILIKE '%' || #{s.companyNm} || '%'</if>
+        <if test="s.bizRegNo != null and s.bizRegNo != ''">AND c.biz_reg_no LIKE '%' || #{s.bizRegNo} || '%'</if>
+        <if test="s.ceoNm != null and s.ceoNm != ''">AND c.ceo_nm ILIKE '%' || #{s.ceoNm} || '%'</if>
+        <if test="s.statusCd != null and s.statusCd != ''">AND c.status_cd = #{s.statusCd}</if>
+        <if test="s.regDtFrom != null">AND c.reg_dt &gt;= #{s.regDtFrom}</if>
+        <if test="s.regDtTo != null">AND c.reg_dt &lt; #{s.regDtTo}::date + 1</if>
+    </sql>
+
+    <select id="countCompanies" resultType="long">
+        SELECT count(*) FROM tb_company c <include refid="searchWhere"/>
+    </select>
+
+    <!-- 정렬 절(orderBy)은 PageQuery가 허용 목록의 칼럼으로만 만든다 -->
+    <select id="selectCompanies" resultType="egovframework.admin.company.CompanyMapper$ListRow">
+        SELECT c.company_id, c.company_nm, c.biz_reg_no, c.ceo_nm, <include refid="memberCnt"/> AS member_cnt,
+               c.status_cd, cd.code_nm AS status_nm, c.reg_dt
+        FROM tb_company c
+        LEFT JOIN tb_code cd ON cd.group_cd = 'COMPANY_STATUS' AND cd.code = c.status_cd
+        <include refid="searchWhere"/>
+        ORDER BY ${orderBy}
+        <if test="limit != null">LIMIT #{limit} OFFSET #{offset}</if>
+    </select>
+
+    <select id="selectCompany" resultType="egovframework.admin.company.CompanyMapper$DetailRow">
+        SELECT c.company_id, c.company_nm, c.biz_reg_no, c.ceo_nm, c.biz_type, c.biz_item, c.tel_no, c.zip_cd,
+               c.addr, c.addr_dtl, c.status_cd, cd.code_nm AS status_nm, <include refid="memberCnt"/> AS member_cnt,
+               ra.admin_nm AS reg_nm, c.reg_dt, ma.admin_nm AS mod_nm, c.mod_dt
+        FROM tb_company c
+        LEFT JOIN tb_code cd ON cd.group_cd = 'COMPANY_STATUS' AND cd.code = c.status_cd
+        LEFT JOIN tb_admin ra ON ra.admin_id = c.reg_id
+        LEFT JOIN tb_admin ma ON ma.admin_id = c.mod_id
+        WHERE c.company_id = #{companyId} AND c.del_yn = 'N'
+    </select>
+
+    <select id="existsBizRegNo" resultType="boolean">
+        SELECT EXISTS (SELECT 1 FROM tb_company WHERE biz_reg_no = #{bizRegNo})
+    </select>
+
+    <select id="insertCompany" resultType="long" flushCache="true">
+        INSERT INTO tb_company (company_nm, biz_reg_no, ceo_nm, biz_type, biz_item, tel_no, zip_cd, addr, addr_dtl,
+                                status_cd, reg_id, mod_id)
+        VALUES (#{c.companyNm}, #{bizRegNo}, #{c.ceoNm}, #{c.bizType}, #{c.bizItem}, #{c.telNo}, #{c.zipCd},
+                #{c.addr}, #{c.addrDtl}, 'ACTIVE', #{regId}, #{regId})
+        RETURNING company_id
+    </select>
+
+    <update id="updateCompany">
+        UPDATE tb_company
+        SET company_nm = #{c.companyNm}, ceo_nm = #{c.ceoNm}, biz_type = #{c.bizType}, biz_item = #{c.bizItem},
+            tel_no = #{c.telNo}, zip_cd = #{c.zipCd}, addr = #{c.addr}, addr_dtl = #{c.addrDtl},
+            mod_id = #{modId}, mod_dt = now()
+        WHERE company_id = #{companyId} AND del_yn = 'N'
+          AND date_trunc('second', mod_dt) = date_trunc('second', #{modDt}::timestamp)
+    </update>
+
+    <update id="updateStatus">
+        UPDATE tb_company
+        SET status_cd = #{statusCd}, mod_id = #{modId}, mod_dt = now()
+        WHERE company_id = #{companyId} AND del_yn = 'N'
+          AND date_trunc('second', mod_dt) = date_trunc('second', #{modDt}::timestamp)
+    </update>
+
+    <update id="deleteCompany">
+        UPDATE tb_company SET del_yn = 'Y', mod_id = #{modId}, mod_dt = now() WHERE company_id = #{companyId}
+    </update>
+
+    <select id="countUsers" resultType="long">
+        SELECT count(*) FROM tb_user WHERE company_id = #{companyId} AND del_yn = 'N'
+    </select>
+
+    <select id="selectUsers" resultType="egovframework.admin.company.CompanyMapper$UserRow">
+        SELECT u.user_id, u.login_id, u.user_nm, u.dept_nm, u.position_nm, u.status_cd, cd.code_nm AS status_nm,
+               u.join_dt
+        FROM tb_user u
+        LEFT JOIN tb_code cd ON cd.group_cd = 'USER_STATUS' AND cd.code = u.status_cd
+        WHERE u.company_id = #{companyId} AND u.del_yn = 'N'
+        ORDER BY u.join_dt DESC, u.user_id DESC
+        LIMIT #{limit}
+    </select>
+</mapper>

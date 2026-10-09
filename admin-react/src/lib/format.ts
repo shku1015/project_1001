@@ -17,6 +17,11 @@ export function formatMobile(value: string | null | undefined): string {
   return value.length === 11 ? value.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3') : value.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3')
 }
 
+/** "1234567890" → "123-45-67890" */
+export function formatBizRegNo(value: string | null | undefined): string {
+  return value && value.length === 10 ? `${value.slice(0, 3)}-${value.slice(3, 5)}-${value.slice(5)}` : value || '-'
+}
+
 /** "2026-10-04T14:30:15" → "2026-10-04" */
 export function formatDate(value: string | null | undefined): string {
   return value ? value.substring(0, 10) : '-'

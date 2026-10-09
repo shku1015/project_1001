@@ -4,6 +4,9 @@ import { AdminDetailPage } from './pages/AdminDetailPage'
 import { AdminFormPage } from './pages/AdminFormPage'
 import { AdminListPage } from './pages/AdminListPage'
 import { PermissionAdminPage } from './pages/PermissionAdminPage'
+import { CompanyDetailPage } from './pages/CompanyDetailPage'
+import { CompanyFormPage } from './pages/CompanyFormPage'
+import { CompanyListPage } from './pages/CompanyListPage'
 import { HomePage } from './pages/HomePage'
 import { LoginPage } from './pages/LoginPage'
 import { CodePage } from './pages/CodePage'
@@ -24,6 +27,10 @@ export function App() {
       <Route path="/" element={<RequireAuth><HomePage /></RequireAuth>} />
       <Route path="/me" element={<RequireAuth><MePage /></RequireAuth>} />
       <Route path="/menus" element={<RequireAuth><MenuPage /></RequireAuth>} />
+      <Route path="/companies" element={<RequireAuth><CompanyListPage /></RequireAuth>} />
+      <Route path="/companies/new" element={<RequireAuth><CompanyFormPage /></RequireAuth>} />
+      <Route path="/companies/:companyId" element={<RequireAuth><CompanyDetailPage /></RequireAuth>} />
+      <Route path="/companies/:companyId/edit" element={<RequireAuth><CompanyFormPage /></RequireAuth>} />
       <Route path="/admins" element={<RequireAuth><AdminListPage /></RequireAuth>} />
       <Route path="/admins/new" element={<RequireAuth><AdminFormPage /></RequireAuth>} />
       <Route path="/admins/:adminId" element={<RequireAuth><AdminDetailPage /></RequireAuth>} />

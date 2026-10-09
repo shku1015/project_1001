@@ -40,7 +40,8 @@ export function Modal({ id, open, title, onClose, children, footer }: {
       <div className="modal-dialog modal-dialog-centered">
         <div className="modal-content">
           <div className="modal-header">
-            <h5 className="modal-title">{title}</h5>
+            {/* 제목 id: "reason-modal" → "reason-title" (②③ 마크업과 같게) */}
+            <h5 className="modal-title" id={id ? `${id.replace(/-modal$/, '')}-title` : undefined}>{title}</h5>
             <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="닫기" />
           </div>
           {children}
