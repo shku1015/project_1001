@@ -28,6 +28,8 @@ tags:
     description: 권한관리 (docs/06-api/07-permission.md)
   - name: admin
     description: 관리자관리 (docs/06-api/06-admin.md)
+  - name: company
+    description: 기업정보관리 (docs/06-api/01-company.md)
 
 paths:
   /auth/token:
@@ -1243,6 +1245,262 @@ paths:
         '409': { $ref: '#/components/responses/Conflict' }
         '500': { $ref: '#/components/responses/InternalError' }
 
+  /companies:
+    get:
+      tags: [company]
+      operationId: listCompanies
+      summary: 기업 목록 (COM-01). 삭제된 기업 제외, 기본 정렬 등록일시 역순
+      parameters:
+        - name: companyNm
+          in: query
+          description: 기업명 (부분 일치)
+          schema: { type: string, maxLength: 100 }
+        - name: bizRegNo
+          in: query
+          description: 사업자등록번호 (숫자, 부분 일치)
+          schema: { type: string, pattern: '^[0-9]{1,10}$' }
+        - name: ceoNm
+          in: query
+          description: 대표자명 (부분 일치)
+          schema: { type: string, maxLength: 50 }
+        - name: statusCd
+          in: query
+          schema: { type: string, enum: [ACTIVE, SUSPENDED] }
+        - name: regDtFrom
+          in: query
+          description: 등록일 시작 (포함)
+          schema: { type: string, format: date }
+        - name: regDtTo
+          in: query
+          description: 등록일 끝 (포함)
+          schema: { type: string, format: date }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+        - name: sort
+          in: query
+          description: 'companyNm, memberCnt, regDt 중 하나와 방향 (예: regDt,desc)'
+          schema:
+            type: array
+            items:
+              type: string
+              pattern: '^(companyNm|memberCnt|regDt),(asc|desc)$'
+          explode: true
+      responses:
+        '200':
+          description: 기업 목록 (페이징)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyPageResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '500': { $ref: '#/components/responses/InternalError' }
+    post:
+      tags: [company]
+      operationId: createCompany
+      summary: 기업 등록 (COM-03). 상태는 정상(ACTIVE)으로 시작
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanyRequest'
+      responses:
+        '201':
+          description: 등록 완료
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyCreatedResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /companies/excel:
+    get:
+      tags: [company]
+      operationId: downloadCompanyExcel
+      summary: 엑셀 다운로드 (COM-08). 목록과 같은 검색 조건·정렬. 10,000건을 넘으면 EXCEL_LIMIT_EXCEEDED
+      parameters:
+        - name: companyNm
+          in: query
+          description: 기업명 (부분 일치)
+          schema: { type: string, maxLength: 100 }
+        - name: bizRegNo
+          in: query
+          description: 사업자등록번호 (숫자, 부분 일치)
+          schema: { type: string, pattern: '^[0-9]{1,10}$' }
+        - name: ceoNm
+          in: query
+          description: 대표자명 (부분 일치)
+          schema: { type: string, maxLength: 50 }
+        - name: statusCd
+          in: query
+          schema: { type: string, enum: [ACTIVE, SUSPENDED] }
+        - name: regDtFrom
+          in: query
+          description: 등록일 시작 (포함)
+          schema: { type: string, format: date }
+        - name: regDtTo
+          in: query
+          description: 등록일 끝 (포함)
+          schema: { type: string, format: date }
+        - name: sort
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              pattern: '^(companyNm|memberCnt|regDt),(asc|desc)$'
+          explode: true
+      responses:
+        '200':
+          description: '.xlsx 파일. 파일명은 Content-Disposition (기업정보관리_yyyyMMddHHmm.xlsx)'
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema: { type: string, format: binary }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /companies/check-biz-reg-no:
+    get:
+      tags: [company]
+      operationId: checkBizRegNo
+      summary: 사업자등록번호 중복 확인 (삭제된 기업의 번호도 중복)
+      parameters:
+        - name: bizRegNo
+          in: query
+          required: true
+          schema: { type: string, pattern: '^[0-9]{10}$' }
+      responses:
+        '200':
+          description: 사용할 수 있으면 available=true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AvailabilityResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /companies/{companyId}:
+    parameters:
+      - $ref: '#/components/parameters/CompanyId'
+    get:
+      tags: [company]
+      operationId: getCompany
+      summary: 기업 상세 (COM-02)
+      responses:
+        '200':
+          description: 기업 상세
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyDetailResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+    put:
+      tags: [company]
+      operationId: updateCompany
+      summary: 기업 수정 (COM-04). 사업자등록번호는 바꾸지 않는다 (보내도 무시)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanyRequest'
+      responses:
+        '200':
+          description: 수정 완료
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmptyResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+    delete:
+      tags: [company]
+      operationId: deleteCompany
+      summary: 기업 삭제 (COM-06). 소속 회원이 없을 때만. 삭제 표시로 처리
+      responses:
+        '200':
+          description: 삭제 완료
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmptyResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /companies/{companyId}/users:
+    parameters:
+      - $ref: '#/components/parameters/CompanyId'
+    get:
+      tags: [company]
+      operationId: getCompanyUsers
+      summary: 소속 회원 (COM-07). 최근 가입순. 이름은 마스킹 설정을 따른다
+      parameters:
+        - name: size
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 50, default: 10 }
+      responses:
+        '200':
+          description: 소속 회원과 전체 건수
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyUsersResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /companies/{companyId}/status:
+    parameters:
+      - $ref: '#/components/parameters/CompanyId'
+    patch:
+      tags: [company]
+      operationId: changeCompanyStatus
+      summary: 상태 변경 (COM-05). 정상 ↔ 정지, 사유 필수
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanyStatusRequest'
+      responses:
+        '200':
+          description: 변경 완료
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmptyResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
 components:
   securitySchemes:
     bearerAuth:
@@ -1252,6 +1510,13 @@ components:
       description: Access Token (docs/04-features/09-auth.md 1.1)
 
   parameters:
+    CompanyId:
+      name: companyId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
     AdminId:
       name: adminId
       in: path
@@ -2584,4 +2849,134 @@ components:
         data:
           type: array
           items: { $ref: '#/components/schemas/AdminLoginHistory' }
+        error: { $ref: '#/components/schemas/NullError' }
+
+    # ---------------------------------------------------------------
+    # 기업정보관리 (docs/06-api/01-company.md)
+    # ---------------------------------------------------------------
+    CompanyListItem:
+      type: object
+      required: [companyId, companyNm, bizRegNo, ceoNm, memberCnt, statusCd, statusNm, regDt]
+      properties:
+        companyId: { type: integer, format: int64 }
+        companyNm: { type: string }
+        bizRegNo: { type: string, pattern: '^[0-9]{10}$' }
+        ceoNm: { type: string }
+        memberCnt: { type: integer, description: 소속 회원 수 (삭제 회원 제외) }
+        statusCd: { type: string, enum: [ACTIVE, SUSPENDED] }
+        statusNm: { type: string, nullable: true }
+        regDt: { $ref: '#/components/schemas/DateTime' }
+
+    CompanyPageResponse:
+      type: object
+      required: [success, data, error]
+      properties:
+        success: { type: boolean, enum: [true] }
+        data:
+          type: object
+          required: [items, page, size, totalCount, totalPages]
+          properties:
+            items:
+              type: array
+              items: { $ref: '#/components/schemas/CompanyListItem' }
+            page: { type: integer, minimum: 1 }
+            size: { type: integer }
+            totalCount: { type: integer, format: int64, minimum: 0 }
+            totalPages: { type: integer, minimum: 0 }
+        error: { $ref: '#/components/schemas/NullError' }
+
+    CompanyDetail:
+      type: object
+      required: [companyId, companyNm, bizRegNo, ceoNm, bizType, bizItem, telNo, zipCd, addr, addrDtl, statusCd, statusNm, memberCnt, regNm, regDt, modNm, modDt]
+      properties:
+        companyId: { type: integer, format: int64 }
+        companyNm: { type: string }
+        bizRegNo: { type: string, pattern: '^[0-9]{10}$' }
+        ceoNm: { type: string }
+        bizType: { type: string, nullable: true }
+        bizItem: { type: string, nullable: true }
+        telNo: { type: string, nullable: true }
+        zipCd: { type: string, nullable: true }
+        addr: { type: string, nullable: true }
+        addrDtl: { type: string, nullable: true }
+        statusCd: { type: string, enum: [ACTIVE, SUSPENDED] }
+        statusNm: { type: string, nullable: true }
+        memberCnt: { type: integer }
+        regNm: { type: string, nullable: true }
+        regDt: { $ref: '#/components/schemas/DateTime' }
+        modNm: { type: string, nullable: true }
+        modDt: { $ref: '#/components/schemas/DateTime' }
+
+    CompanyDetailResponse:
+      type: object
+      required: [success, data, error]
+      properties:
+        success: { type: boolean, enum: [true] }
+        data: { $ref: '#/components/schemas/CompanyDetail' }
+        error: { $ref: '#/components/schemas/NullError' }
+
+    CompanyRequest:
+      type: object
+      required: [companyNm, ceoNm]
+      additionalProperties: false
+      description: 등록은 bizRegNo 필수·modDt 없음, 수정은 modDt 필수·bizRegNo 무시
+      properties:
+        companyNm: { type: string, minLength: 1, maxLength: 100 }
+        bizRegNo: { type: string, nullable: true, pattern: '^[0-9]{10}$' }
+        ceoNm: { type: string, minLength: 1, maxLength: 50 }
+        bizType: { type: string, nullable: true, maxLength: 100 }
+        bizItem: { type: string, nullable: true, maxLength: 100 }
+        telNo: { type: string, nullable: true, pattern: '^[0-9]{9,11}$' }
+        zipCd: { type: string, nullable: true, pattern: '^[0-9]{5}$' }
+        addr: { type: string, nullable: true, maxLength: 200 }
+        addrDtl: { type: string, nullable: true, maxLength: 200 }
+        modDt: { type: string, nullable: true, pattern: '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$' }
+
+    CompanyCreatedResponse:
+      type: object
+      required: [success, data, error]
+      properties:
+        success: { type: boolean, enum: [true] }
+        data:
+          type: object
+          required: [companyId]
+          properties:
+            companyId: { type: integer, format: int64 }
+        error: { $ref: '#/components/schemas/NullError' }
+
+    CompanyStatusRequest:
+      type: object
+      required: [statusCd, reason, modDt]
+      additionalProperties: false
+      properties:
+        statusCd: { type: string, enum: [ACTIVE, SUSPENDED] }
+        reason: { type: string, minLength: 1, maxLength: 500 }
+        modDt: { $ref: '#/components/schemas/DateTime' }
+
+    CompanyUser:
+      type: object
+      required: [userId, loginId, userNm, deptNm, positionNm, statusCd, statusNm, joinDt]
+      properties:
+        userId: { type: integer, format: int64 }
+        loginId: { type: string }
+        userNm: { type: string, description: 마스킹 설정을 따른다 }
+        deptNm: { type: string, nullable: true }
+        positionNm: { type: string, nullable: true }
+        statusCd: { type: string }
+        statusNm: { type: string, nullable: true }
+        joinDt: { $ref: '#/components/schemas/DateTime' }
+
+    CompanyUsersResponse:
+      type: object
+      required: [success, data, error]
+      properties:
+        success: { type: boolean, enum: [true] }
+        data:
+          type: object
+          required: [items, totalCount]
+          properties:
+            items:
+              type: array
+              items: { $ref: '#/components/schemas/CompanyUser' }
+            totalCount: { type: integer, format: int64, minimum: 0 }
         error: { $ref: '#/components/schemas/NullError' }

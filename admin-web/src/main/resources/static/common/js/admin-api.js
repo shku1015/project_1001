@@ -66,7 +66,35 @@
     }
   }
 
+  /**
+   * 파일 내려받기 (엑셀 등). 토큰을 붙여 받고, 실패하면 파일 대신 온 실패 JSON을 ApiError로 던진다.
+   * 파일명은 Content-Disposition의 filename*=UTF-8''... 에서 꺼낸다.
+   */
+  async function download(path) {
+    async function get() {
+      return fetch(BASE + path, { headers: accessToken ? { 'Authorization': 'Bearer ' + accessToken } : {}, credentials: 'same-origin' });
+    }
+    var res = await get();
+    if (res.status === 401) {
+      var expired = new ApiError(401, await res.json().catch(function () { return null; }));
+      if (expired.code !== 'TOKEN_EXPIRED') { throw expired; }
+      await refresh();
+      res = await get();
+    }
+    if (!res.ok) {
+      throw new ApiError(res.status, await res.json().catch(function () { return null; }));
+    }
+    var match = /filename\*=UTF-8''([^;]+)/i.exec(res.headers.get('Content-Disposition') || '');
+    var href = URL.createObjectURL(await res.blob());
+    var a = document.createElement('a');
+    a.href = href;
+    a.download = match ? decodeURIComponent(match[1]) : 'download.xlsx';
+    a.click();
+    URL.revokeObjectURL(href);
+  }
+
   global.AdminApi = {
+    download: download,
     ApiError: ApiError,
     async login(loginId, password) {
       var token = await send('POST', '/auth/token', { loginId: loginId, password: password }, false);

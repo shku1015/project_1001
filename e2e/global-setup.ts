@@ -42,6 +42,8 @@ export default async function globalSetup() {
     // E2E가 만든 코드관리 데이터 정리 (반복 실행 안전)
     await client.query("DELETE FROM tb_code WHERE group_cd LIKE 'E2E\\_%'")
     await client.query("DELETE FROM tb_code_group WHERE group_cd LIKE 'E2E\\_%'")
+    // E2E가 만든 기업 정리 (사업자등록번호 800000000x, 소속 회원 없음)
+    await client.query("DELETE FROM tb_company WHERE biz_reg_no LIKE '80000000%'")
     // E2E가 만든 역할 정리
     await client.query("DELETE FROM tb_role_permission WHERE role_id IN (SELECT role_id FROM tb_role WHERE role_cd LIKE 'E2E\\_%')")
     await client.query("DELETE FROM tb_admin_role WHERE role_id IN (SELECT role_id FROM tb_role WHERE role_cd LIKE 'E2E\\_%')")

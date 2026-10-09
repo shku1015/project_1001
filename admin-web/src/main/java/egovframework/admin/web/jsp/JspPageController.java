@@ -65,6 +65,28 @@ public class JspPageController {
         return "jsp/permission";
     }
 
+    @GetMapping("/jsp/companies")
+    public String companies() {
+        return "jsp/company-list";
+    }
+
+    @GetMapping("/jsp/companies/new")
+    public String companyNew() {
+        return "jsp/company-form";
+    }
+
+    @GetMapping("/jsp/companies/{companyId}")
+    public String company(@PathVariable long companyId, Model model) {
+        model.addAttribute("companyId", companyId);
+        return "jsp/company-detail";
+    }
+
+    @GetMapping("/jsp/companies/{companyId}/edit")
+    public String companyEdit(@PathVariable long companyId, Model model) {
+        model.addAttribute("companyId", companyId);
+        return "jsp/company-form";
+    }
+
     @GetMapping("/jsp/permissions/admins")
     public String permissionAdmins() {
         return "jsp/permission-admin";

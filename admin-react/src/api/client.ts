@@ -94,3 +94,37 @@ export async function call<T>(config: AxiosRequestConfig): Promise<T> {
   const res = await http.request<{ data: T }>(config)
   return res.data.data
 }
+
+/** 파일 응답이 실패하면 파일 대신 실패 JSON이 온다 (docs/06-api-spec.md 8절) */
+async function blobError(status: number, data: Blob): Promise<ApiError> {
+  try {
+    const body = JSON.parse(await data.text()) as ErrorBody
+    if (body.error) return new ApiError(status, body.error.code, body.error.message, body.error.fieldErrors ?? [])
+  } catch { /* JSON이 아니면 아래 일반 오류 */ }
+  return new ApiError(status, 'INTERNAL_ERROR', '일시적인 오류가 발생했습니다. 잠시 후 다시 시도하세요.')
+}
+
+/** Content-Disposition의 filename*=UTF-8''... 에서 파일명을 꺼낸다 */
+export function fileNameOf(disposition: string | undefined, fallback: string): string {
+  const match = disposition?.match(/filename\*=UTF-8''([^;]+)/i)
+  return match ? decodeURIComponent(match[1]) : fallback
+}
+
+/** 파일 내려받기 (엑셀 등). Access Token이 만료되면 한 번 재발급 후 다시 받는다 */
+export async function download(url: string): Promise<void> {
+  const get = () => http.get<Blob>(url, { responseType: 'blob', validateStatus: () => true })
+  let res = await get()
+  if (res.status === 401) {
+    const error = await blobError(res.status, res.data)
+    if (error.code !== 'TOKEN_EXPIRED') throw error
+    await refreshAccessToken()
+    res = await get()
+  }
+  if (res.status !== 200) throw await blobError(res.status, res.data)
+  const href = URL.createObjectURL(res.data)
+  const a = document.createElement('a')
+  a.href = href
+  a.download = fileNameOf(res.headers['content-disposition'] as string | undefined, 'download.xlsx')
+  a.click()
+  URL.revokeObjectURL(href)
+}

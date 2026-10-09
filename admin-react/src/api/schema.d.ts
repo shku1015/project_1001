@@ -696,6 +696,117 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/companies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 기업 목록 (COM-01). 삭제된 기업 제외, 기본 정렬 등록일시 역순 */
+        get: operations["listCompanies"];
+        put?: never;
+        /** 기업 등록 (COM-03). 상태는 정상(ACTIVE)으로 시작 */
+        post: operations["createCompany"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/companies/excel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 엑셀 다운로드 (COM-08). 목록과 같은 검색 조건·정렬. 10,000건을 넘으면 EXCEL_LIMIT_EXCEEDED */
+        get: operations["downloadCompanyExcel"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/companies/check-biz-reg-no": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 사업자등록번호 중복 확인 (삭제된 기업의 번호도 중복) */
+        get: operations["checkBizRegNo"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/companies/{companyId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: components["parameters"]["CompanyId"];
+            };
+            cookie?: never;
+        };
+        /** 기업 상세 (COM-02) */
+        get: operations["getCompany"];
+        /** 기업 수정 (COM-04). 사업자등록번호는 바꾸지 않는다 (보내도 무시) */
+        put: operations["updateCompany"];
+        post?: never;
+        /** 기업 삭제 (COM-06). 소속 회원이 없을 때만. 삭제 표시로 처리 */
+        delete: operations["deleteCompany"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/companies/{companyId}/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: components["parameters"]["CompanyId"];
+            };
+            cookie?: never;
+        };
+        /** 소속 회원 (COM-07). 최근 가입순. 이름은 마스킹 설정을 따른다 */
+        get: operations["getCompanyUsers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/companies/{companyId}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: components["parameters"]["CompanyId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** 상태 변경 (COM-05). 정상 ↔ 정지, 사유 필수 */
+        patch: operations["changeCompanyStatus"];
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1424,6 +1535,109 @@ export interface components {
             data: components["schemas"]["AdminLoginHistory"][];
             error: components["schemas"]["NullError"];
         };
+        CompanyListItem: {
+            /** Format: int64 */
+            companyId: number;
+            companyNm: string;
+            bizRegNo: string;
+            ceoNm: string;
+            /** @description 소속 회원 수 (삭제 회원 제외) */
+            memberCnt: number;
+            /** @enum {string} */
+            statusCd: "ACTIVE" | "SUSPENDED";
+            statusNm: string | null;
+            regDt: components["schemas"]["DateTime"];
+        };
+        CompanyPageResponse: {
+            /** @enum {boolean} */
+            success: true;
+            data: {
+                items: components["schemas"]["CompanyListItem"][];
+                page: number;
+                size: number;
+                /** Format: int64 */
+                totalCount: number;
+                totalPages: number;
+            };
+            error: components["schemas"]["NullError"];
+        };
+        CompanyDetail: {
+            /** Format: int64 */
+            companyId: number;
+            companyNm: string;
+            bizRegNo: string;
+            ceoNm: string;
+            bizType: string | null;
+            bizItem: string | null;
+            telNo: string | null;
+            zipCd: string | null;
+            addr: string | null;
+            addrDtl: string | null;
+            /** @enum {string} */
+            statusCd: "ACTIVE" | "SUSPENDED";
+            statusNm: string | null;
+            memberCnt: number;
+            regNm: string | null;
+            regDt: components["schemas"]["DateTime"];
+            modNm: string | null;
+            modDt: components["schemas"]["DateTime"];
+        };
+        CompanyDetailResponse: {
+            /** @enum {boolean} */
+            success: true;
+            data: components["schemas"]["CompanyDetail"];
+            error: components["schemas"]["NullError"];
+        };
+        /** @description 등록은 bizRegNo 필수·modDt 없음, 수정은 modDt 필수·bizRegNo 무시 */
+        CompanyRequest: {
+            companyNm: string;
+            bizRegNo?: string | null;
+            ceoNm: string;
+            bizType?: string | null;
+            bizItem?: string | null;
+            telNo?: string | null;
+            zipCd?: string | null;
+            addr?: string | null;
+            addrDtl?: string | null;
+            modDt?: string | null;
+        };
+        CompanyCreatedResponse: {
+            /** @enum {boolean} */
+            success: true;
+            data: {
+                /** Format: int64 */
+                companyId: number;
+            };
+            error: components["schemas"]["NullError"];
+        };
+        CompanyStatusRequest: {
+            /** @enum {string} */
+            statusCd: "ACTIVE" | "SUSPENDED";
+            reason: string;
+            modDt: components["schemas"]["DateTime"];
+        };
+        CompanyUser: {
+            /** Format: int64 */
+            userId: number;
+            loginId: string;
+            /** @description 마스킹 설정을 따른다 */
+            userNm: string;
+            deptNm: string | null;
+            positionNm: string | null;
+            statusCd: string;
+            statusNm: string | null;
+            joinDt: components["schemas"]["DateTime"];
+        };
+        CompanyUsersResponse: {
+            /** @enum {boolean} */
+            success: true;
+            data: {
+                items: components["schemas"]["CompanyUser"][];
+                /** Format: int64 */
+                totalCount: number;
+            };
+            error: components["schemas"]["NullError"];
+        };
     };
     responses: {
         /** @description 입력값 오류 (VALIDATION_ERROR, INVALID_REQUEST) */
@@ -1482,6 +1696,7 @@ export interface components {
         };
     };
     parameters: {
+        CompanyId: number;
         AdminId: number;
         RoleId: number;
         MenuId: number;
@@ -2975,6 +3190,289 @@ export interface operations {
                     "application/json": components["schemas"]["AdminLoginHistoryResponse"];
                 };
             };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    listCompanies: {
+        parameters: {
+            query?: {
+                /** @description 기업명 (부분 일치) */
+                companyNm?: string;
+                /** @description 사업자등록번호 (숫자, 부분 일치) */
+                bizRegNo?: string;
+                /** @description 대표자명 (부분 일치) */
+                ceoNm?: string;
+                statusCd?: "ACTIVE" | "SUSPENDED";
+                /** @description 등록일 시작 (포함) */
+                regDtFrom?: string;
+                /** @description 등록일 끝 (포함) */
+                regDtTo?: string;
+                /** @description 페이지 번호 (1부터) */
+                page?: components["parameters"]["Page"];
+                /** @description 페이지 크기 */
+                size?: components["parameters"]["Size"];
+                /** @description companyNm, memberCnt, regDt 중 하나와 방향 (예: regDt,desc) */
+                sort?: string[];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 기업 목록 (페이징) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyPageResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    createCompany: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompanyRequest"];
+            };
+        };
+        responses: {
+            /** @description 등록 완료 */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyCreatedResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    downloadCompanyExcel: {
+        parameters: {
+            query?: {
+                /** @description 기업명 (부분 일치) */
+                companyNm?: string;
+                /** @description 사업자등록번호 (숫자, 부분 일치) */
+                bizRegNo?: string;
+                /** @description 대표자명 (부분 일치) */
+                ceoNm?: string;
+                statusCd?: "ACTIVE" | "SUSPENDED";
+                /** @description 등록일 시작 (포함) */
+                regDtFrom?: string;
+                /** @description 등록일 끝 (포함) */
+                regDtTo?: string;
+                sort?: string[];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description .xlsx 파일. 파일명은 Content-Disposition (기업정보관리_yyyyMMddHHmm.xlsx) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": string;
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    checkBizRegNo: {
+        parameters: {
+            query: {
+                bizRegNo: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 사용할 수 있으면 available=true */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AvailabilityResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    getCompany: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: components["parameters"]["CompanyId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 기업 상세 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyDetailResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    updateCompany: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: components["parameters"]["CompanyId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompanyRequest"];
+            };
+        };
+        responses: {
+            /** @description 수정 완료 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmptyResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    deleteCompany: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: components["parameters"]["CompanyId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 삭제 완료 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmptyResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    getCompanyUsers: {
+        parameters: {
+            query?: {
+                size?: number;
+            };
+            header?: never;
+            path: {
+                companyId: components["parameters"]["CompanyId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 소속 회원과 전체 건수 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyUsersResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    changeCompanyStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: components["parameters"]["CompanyId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompanyStatusRequest"];
+            };
+        };
+        responses: {
+            /** @description 변경 완료 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmptyResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
