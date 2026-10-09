@@ -503,6 +503,199 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admins": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 관리자 목록 (ADM-01). 기본 정렬 등록일시 역순 */
+        get: operations["listAdmins"];
+        put?: never;
+        /** 관리자 등록 (ADM-03). 임시 비밀번호를 한 번만 돌려준다 */
+        post: operations["createAdmin"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admins/check-login-id": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 로그인 아이디 중복 확인 (사용중지된 관리자의 아이디도 쓸 수 없다) */
+        get: operations["checkLoginId"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admins/role-options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 역할 선택 목록. 목록 검색(전체)과 역할 부여(assignable만)에 쓴다
+         * @description assignable은 사용 중이고 내 권한 범위 안의 역할 (R5). 슈퍼관리자면 사용 중인 역할 전체
+         */
+        get: operations["getAdminRoleOptions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admins/{adminId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                adminId: components["parameters"]["AdminId"];
+            };
+            cookie?: never;
+        };
+        /** 관리자 상세 (ADM-02) */
+        get: operations["getAdmin"];
+        /** 관리자 정보 수정 (ADM-04). 로그인 아이디·역할은 바꾸지 않는다 */
+        put: operations["updateAdmin"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admins/{adminId}/roles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                adminId: components["parameters"]["AdminId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** 역할 부여 (ADM-05). 본인 불가(R4), 사용 안 함 역할 불가, 내 권한을 넘는 역할 불가(R5) */
+        post: operations["grantAdminRole"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admins/{adminId}/roles/{roleId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                adminId: components["parameters"]["AdminId"];
+                roleId: components["parameters"]["RoleId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** 역할 회수 (ADM-05). 본인 불가, 마지막 역할 불가, 마지막 슈퍼관리자의 슈퍼관리자 역할 불가(R3) */
+        delete: operations["revokeAdminRole"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admins/{adminId}/unlock": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                adminId: components["parameters"]["AdminId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** 잠금 해제 (ADM-06). 잠금 상태만. 실패 횟수를 0으로 */
+        post: operations["unlockAdmin"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admins/{adminId}/password-reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                adminId: components["parameters"]["AdminId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** 비밀번호 초기화 (ADM-07). 임시 비밀번호를 한 번만 돌려주고 대상의 로그인을 모두 끊는다 */
+        post: operations["resetAdminPassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admins/{adminId}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                adminId: components["parameters"]["AdminId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * 사용중지 / 재사용 (ADM-08). 사용중지하면 대상의 로그인을 모두 끊는다
+         * @description DISABLED는 ACTIVE·LOCKED에서, ACTIVE는 DISABLED에서만. 본인 사용중지 불가(SELF_DISABLE), 마지막 슈퍼관리자 불가(LAST_SUPER_ADMIN)
+         */
+        patch: operations["changeAdminStatus"];
+        trace?: never;
+    };
+    "/admins/{adminId}/login-histories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                adminId: components["parameters"]["AdminId"];
+            };
+            cookie?: never;
+        };
+        /** 최근 로그인 이력 20건 (ADM-09) */
+        get: operations["getAdminLoginHistories"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1088,6 +1281,149 @@ export interface components {
             };
             error: components["schemas"]["NullError"];
         };
+        AdminRoleRef: {
+            /** Format: int64 */
+            roleId: number;
+            roleNm: string;
+        };
+        AdminListItem: {
+            /** Format: int64 */
+            adminId: number;
+            loginId: string;
+            adminNm: string;
+            deptNm: string | null;
+            roles: components["schemas"]["AdminRoleRef"][];
+            /** @enum {string} */
+            statusCd: "ACTIVE" | "LOCKED" | "DISABLED";
+            statusNm: string | null;
+            lastLoginDt: string | null;
+            regDt: components["schemas"]["DateTime"];
+        };
+        AdminPageResponse: {
+            /** @enum {boolean} */
+            success: true;
+            data: {
+                items: components["schemas"]["AdminListItem"][];
+                page: number;
+                size: number;
+                /** Format: int64 */
+                totalCount: number;
+                totalPages: number;
+            };
+            error: components["schemas"]["NullError"];
+        };
+        AdminGrantedRole: {
+            /** Format: int64 */
+            roleId: number;
+            roleCd: string;
+            roleNm: string;
+            useYn: components["schemas"]["YnFlag"];
+            /** @description 부여자 */
+            regNm: string | null;
+            regDt: components["schemas"]["DateTime"];
+        };
+        AdminDetail: {
+            /** Format: int64 */
+            adminId: number;
+            loginId: string;
+            adminNm: string;
+            email: string;
+            mobileNo: string | null;
+            deptNm: string | null;
+            /** @enum {string} */
+            statusCd: "ACTIVE" | "LOCKED" | "DISABLED";
+            statusNm: string | null;
+            loginFailCnt: number;
+            pwdTempYn: components["schemas"]["YnFlag"];
+            pwdChangedDt: string | null;
+            lastLoginDt: string | null;
+            roles: components["schemas"]["AdminGrantedRole"][];
+            /** @description 본인 계정이면 true (역할 추가·회수, 사용중지 버튼을 숨긴다) */
+            self: boolean;
+            regNm: string | null;
+            regDt: components["schemas"]["DateTime"];
+            modNm: string | null;
+            modDt: components["schemas"]["DateTime"];
+        };
+        AdminDetailResponse: {
+            /** @enum {boolean} */
+            success: true;
+            data: components["schemas"]["AdminDetail"];
+            error: components["schemas"]["NullError"];
+        };
+        AdminCreateRequest: {
+            loginId: string;
+            adminNm: string;
+            email: string;
+            mobileNo?: string | null;
+            deptNm?: string | null;
+            roleIds: number[];
+        };
+        AdminUpdateRequest: {
+            adminNm: string;
+            email: string;
+            mobileNo?: string | null;
+            deptNm?: string | null;
+            modDt: components["schemas"]["DateTime"];
+        };
+        AdminRoleGrantRequest: {
+            /** Format: int64 */
+            roleId: number;
+        };
+        AdminStatusRequest: {
+            /** @enum {string} */
+            statusCd: "ACTIVE" | "DISABLED";
+            modDt: components["schemas"]["DateTime"];
+        };
+        AdminCreatedResponse: {
+            /** @enum {boolean} */
+            success: true;
+            data: {
+                /** Format: int64 */
+                adminId: number;
+                /** @description 한 번만 보여 준다 (BR-02) */
+                tempPassword: string;
+            };
+            error: components["schemas"]["NullError"];
+        };
+        TempPasswordResponse: {
+            /** @enum {boolean} */
+            success: true;
+            data: {
+                /** @description 한 번만 보여 준다 (BR-02) */
+                tempPassword: string;
+            };
+            error: components["schemas"]["NullError"];
+        };
+        AdminRoleOption: {
+            /** Format: int64 */
+            roleId: number;
+            roleCd: string;
+            roleNm: string;
+            useYn: components["schemas"]["YnFlag"];
+            /** @description 내가 부여할 수 있는 역할인지 (사용 중 + R5) */
+            assignable: boolean;
+        };
+        AdminRoleOptionsResponse: {
+            /** @enum {boolean} */
+            success: true;
+            data: components["schemas"]["AdminRoleOption"][];
+            error: components["schemas"]["NullError"];
+        };
+        AdminLoginHistory: {
+            regDt: components["schemas"]["DateTime"];
+            resultCd: string;
+            resultNm: string | null;
+            /** @enum {string} */
+            authTypeCd: "SESSION" | "TOKEN";
+            ipAddr: string;
+        };
+        AdminLoginHistoryResponse: {
+            /** @enum {boolean} */
+            success: true;
+            data: components["schemas"]["AdminLoginHistory"][];
+            error: components["schemas"]["NullError"];
+        };
     };
     responses: {
         /** @description 입력값 오류 (VALIDATION_ERROR, INVALID_REQUEST) */
@@ -1146,6 +1482,7 @@ export interface components {
         };
     };
     parameters: {
+        AdminId: number;
         RoleId: number;
         MenuId: number;
         GroupCd: string;
@@ -2282,6 +2619,360 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AdminEffectivePermissionResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    listAdmins: {
+        parameters: {
+            query?: {
+                /** @description 로그인 아이디·이름 (관리자 선택창 CMP-12) */
+                keyword?: string;
+                /** @description 로그인 아이디 (부분 일치) */
+                loginId?: string;
+                /** @description 이름 (부분 일치) */
+                adminNm?: string;
+                /** @description 부서 (부분 일치) */
+                deptNm?: string;
+                /** @description 역할 */
+                roleId?: number;
+                /** @description 상태 (ADMIN_STATUS) */
+                statusCd?: "ACTIVE" | "LOCKED" | "DISABLED";
+                /** @description 페이지 번호 (1부터) */
+                page?: components["parameters"]["Page"];
+                /** @description 페이지 크기 */
+                size?: components["parameters"]["Size"];
+                /** @description loginId, adminNm, lastLoginDt, regDt 중 하나와 방향 (예: regDt,desc) */
+                sort?: string[];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 관리자 목록 (페이징) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminPageResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    createAdmin: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description 등록 완료 */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminCreatedResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    checkLoginId: {
+        parameters: {
+            query: {
+                loginId: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 사용할 수 있으면 available=true */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AvailabilityResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    getAdminRoleOptions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 역할 전체 (등록순) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminRoleOptionsResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    getAdmin: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                adminId: components["parameters"]["AdminId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 관리자 상세 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminDetailResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    updateAdmin: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                adminId: components["parameters"]["AdminId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description 수정 완료 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmptyResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    grantAdminRole: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                adminId: components["parameters"]["AdminId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminRoleGrantRequest"];
+            };
+        };
+        responses: {
+            /** @description 부여 완료 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmptyResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    revokeAdminRole: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                adminId: components["parameters"]["AdminId"];
+                roleId: components["parameters"]["RoleId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 회수 완료 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmptyResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    unlockAdmin: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                adminId: components["parameters"]["AdminId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 해제 완료 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmptyResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    resetAdminPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                adminId: components["parameters"]["AdminId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 임시 비밀번호 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TempPasswordResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    changeAdminStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                adminId: components["parameters"]["AdminId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminStatusRequest"];
+            };
+        };
+        responses: {
+            /** @description 변경 완료 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmptyResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    getAdminLoginHistories: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                adminId: components["parameters"]["AdminId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 최근 순 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminLoginHistoryResponse"];
                 };
             };
             401: components["responses"]["Unauthorized"];

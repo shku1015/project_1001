@@ -6,6 +6,17 @@ export function formatDateTime(value: string | null | undefined): string {
   return value ? value.replace('T', ' ').substring(0, 16) : '-'
 }
 
+/** "2026-10-04T14:30:15" → "2026-10-04 14:30:15" (상세 화면) */
+export function formatDateTimeSec(value: string | null | undefined): string {
+  return value ? value.replace('T', ' ').substring(0, 19) : '-'
+}
+
+/** "01012345678" → "010-1234-5678" */
+export function formatMobile(value: string | null | undefined): string {
+  if (!value) return '-'
+  return value.length === 11 ? value.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3') : value.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3')
+}
+
 /** "2026-10-04T14:30:15" → "2026-10-04" */
 export function formatDate(value: string | null | undefined): string {
   return value ? value.substring(0, 10) : '-'

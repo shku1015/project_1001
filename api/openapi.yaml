@@ -26,6 +26,8 @@ tags:
     description: 역할관리 (docs/06-api/08-role.md)
   - name: permission
     description: 권한관리 (docs/06-api/07-permission.md)
+  - name: admin
+    description: 관리자관리 (docs/06-api/06-admin.md)
 
 paths:
   /auth/token:
@@ -947,6 +949,300 @@ paths:
         '409': { $ref: '#/components/responses/Conflict' }
         '500': { $ref: '#/components/responses/InternalError' }
 
+  /admins:
+    get:
+      tags: [admin]
+      operationId: listAdmins
+      summary: 관리자 목록 (ADM-01). 기본 정렬 등록일시 역순
+      parameters:
+        - name: keyword
+          in: query
+          description: 로그인 아이디·이름 (관리자 선택창 CMP-12)
+          schema: { type: string, maxLength: 100 }
+        - name: loginId
+          in: query
+          description: 로그인 아이디 (부분 일치)
+          schema: { type: string, maxLength: 100 }
+        - name: adminNm
+          in: query
+          description: 이름 (부분 일치)
+          schema: { type: string, maxLength: 100 }
+        - name: deptNm
+          in: query
+          description: 부서 (부분 일치)
+          schema: { type: string, maxLength: 100 }
+        - name: roleId
+          in: query
+          description: 역할
+          schema: { type: integer, format: int64 }
+        - name: statusCd
+          in: query
+          description: 상태 (ADMIN_STATUS)
+          schema: { type: string, enum: [ACTIVE, LOCKED, DISABLED] }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+        - name: sort
+          in: query
+          description: 'loginId, adminNm, lastLoginDt, regDt 중 하나와 방향 (예: regDt,desc)'
+          schema:
+            type: array
+            items:
+              type: string
+              pattern: '^(loginId|adminNm|lastLoginDt|regDt),(asc|desc)$'
+          explode: true
+      responses:
+        '200':
+          description: 관리자 목록 (페이징)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminPageResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '500': { $ref: '#/components/responses/InternalError' }
+    post:
+      tags: [admin]
+      operationId: createAdmin
+      summary: 관리자 등록 (ADM-03). 임시 비밀번호를 한 번만 돌려준다
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminCreateRequest'
+      responses:
+        '201':
+          description: 등록 완료
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCreatedResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /admins/check-login-id:
+    get:
+      tags: [admin]
+      operationId: checkLoginId
+      summary: 로그인 아이디 중복 확인 (사용중지된 관리자의 아이디도 쓸 수 없다)
+      parameters:
+        - name: loginId
+          in: query
+          required: true
+          schema: { type: string, maxLength: 50 }
+      responses:
+        '200':
+          description: 사용할 수 있으면 available=true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AvailabilityResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /admins/role-options:
+    get:
+      tags: [admin]
+      operationId: getAdminRoleOptions
+      summary: 역할 선택 목록. 목록 검색(전체)과 역할 부여(assignable만)에 쓴다
+      description: assignable은 사용 중이고 내 권한 범위 안의 역할 (R5). 슈퍼관리자면 사용 중인 역할 전체
+      responses:
+        '200':
+          description: 역할 전체 (등록순)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminRoleOptionsResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /admins/{adminId}:
+    parameters:
+      - $ref: '#/components/parameters/AdminId'
+    get:
+      tags: [admin]
+      operationId: getAdmin
+      summary: 관리자 상세 (ADM-02)
+      responses:
+        '200':
+          description: 관리자 상세
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminDetailResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+    put:
+      tags: [admin]
+      operationId: updateAdmin
+      summary: 관리자 정보 수정 (ADM-04). 로그인 아이디·역할은 바꾸지 않는다
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminUpdateRequest'
+      responses:
+        '200':
+          description: 수정 완료
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmptyResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /admins/{adminId}/roles:
+    parameters:
+      - $ref: '#/components/parameters/AdminId'
+    post:
+      tags: [admin]
+      operationId: grantAdminRole
+      summary: 역할 부여 (ADM-05). 본인 불가(R4), 사용 안 함 역할 불가, 내 권한을 넘는 역할 불가(R5)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminRoleGrantRequest'
+      responses:
+        '200':
+          description: 부여 완료
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmptyResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /admins/{adminId}/roles/{roleId}:
+    parameters:
+      - $ref: '#/components/parameters/AdminId'
+      - $ref: '#/components/parameters/RoleId'
+    delete:
+      tags: [admin]
+      operationId: revokeAdminRole
+      summary: 역할 회수 (ADM-05). 본인 불가, 마지막 역할 불가, 마지막 슈퍼관리자의 슈퍼관리자 역할 불가(R3)
+      responses:
+        '200':
+          description: 회수 완료
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmptyResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /admins/{adminId}/unlock:
+    parameters:
+      - $ref: '#/components/parameters/AdminId'
+    post:
+      tags: [admin]
+      operationId: unlockAdmin
+      summary: 잠금 해제 (ADM-06). 잠금 상태만. 실패 횟수를 0으로
+      responses:
+        '200':
+          description: 해제 완료
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmptyResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /admins/{adminId}/password-reset:
+    parameters:
+      - $ref: '#/components/parameters/AdminId'
+    post:
+      tags: [admin]
+      operationId: resetAdminPassword
+      summary: 비밀번호 초기화 (ADM-07). 임시 비밀번호를 한 번만 돌려주고 대상의 로그인을 모두 끊는다
+      responses:
+        '200':
+          description: 임시 비밀번호
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TempPasswordResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /admins/{adminId}/status:
+    parameters:
+      - $ref: '#/components/parameters/AdminId'
+    patch:
+      tags: [admin]
+      operationId: changeAdminStatus
+      summary: 사용중지 / 재사용 (ADM-08). 사용중지하면 대상의 로그인을 모두 끊는다
+      description: DISABLED는 ACTIVE·LOCKED에서, ACTIVE는 DISABLED에서만. 본인 사용중지 불가(SELF_DISABLE), 마지막 슈퍼관리자 불가(LAST_SUPER_ADMIN)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminStatusRequest'
+      responses:
+        '200':
+          description: 변경 완료
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmptyResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /admins/{adminId}/login-histories:
+    parameters:
+      - $ref: '#/components/parameters/AdminId'
+    get:
+      tags: [admin]
+      operationId: getAdminLoginHistories
+      summary: 최근 로그인 이력 20건 (ADM-09)
+      responses:
+        '200':
+          description: 최근 순
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminLoginHistoryResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
 components:
   securitySchemes:
     bearerAuth:
@@ -956,6 +1252,13 @@ components:
       description: Access Token (docs/04-features/09-auth.md 1.1)
 
   parameters:
+    AdminId:
+      name: adminId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
     RoleId:
       name: roleId
       in: path
@@ -2087,4 +2390,198 @@ components:
               type: array
               description: 메뉴 트리 순서 (depth로 들여쓰기)
               items: { $ref: '#/components/schemas/EffectivePermissionMenu' }
+        error: { $ref: '#/components/schemas/NullError' }
+
+    # ---------------------------------------------------------------
+    # 관리자관리 (docs/06-api/06-admin.md)
+    # ---------------------------------------------------------------
+    AdminRoleRef:
+      type: object
+      required: [roleId, roleNm]
+      properties:
+        roleId: { type: integer, format: int64 }
+        roleNm: { type: string }
+
+    AdminListItem:
+      type: object
+      required: [adminId, loginId, adminNm, deptNm, roles, statusCd, statusNm, lastLoginDt, regDt]
+      properties:
+        adminId: { type: integer, format: int64 }
+        loginId: { type: string }
+        adminNm: { type: string }
+        deptNm: { type: string, nullable: true }
+        roles:
+          type: array
+          items: { $ref: '#/components/schemas/AdminRoleRef' }
+        statusCd: { type: string, enum: [ACTIVE, LOCKED, DISABLED] }
+        statusNm: { type: string, nullable: true }
+        lastLoginDt: { type: string, nullable: true, pattern: '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$' }
+        regDt: { $ref: '#/components/schemas/DateTime' }
+
+    AdminPageResponse:
+      type: object
+      required: [success, data, error]
+      properties:
+        success: { type: boolean, enum: [true] }
+        data:
+          type: object
+          required: [items, page, size, totalCount, totalPages]
+          properties:
+            items:
+              type: array
+              items: { $ref: '#/components/schemas/AdminListItem' }
+            page: { type: integer, minimum: 1 }
+            size: { type: integer }
+            totalCount: { type: integer, format: int64, minimum: 0 }
+            totalPages: { type: integer, minimum: 0 }
+        error: { $ref: '#/components/schemas/NullError' }
+
+    AdminGrantedRole:
+      type: object
+      required: [roleId, roleCd, roleNm, useYn, regNm, regDt]
+      properties:
+        roleId: { type: integer, format: int64 }
+        roleCd: { type: string }
+        roleNm: { type: string }
+        useYn: { $ref: '#/components/schemas/YnFlag' }
+        regNm: { type: string, nullable: true, description: 부여자 }
+        regDt: { $ref: '#/components/schemas/DateTime' }
+
+    AdminDetail:
+      type: object
+      required: [adminId, loginId, adminNm, email, mobileNo, deptNm, statusCd, statusNm, loginFailCnt, pwdTempYn, pwdChangedDt, lastLoginDt, roles, self, regNm, regDt, modNm, modDt]
+      properties:
+        adminId: { type: integer, format: int64 }
+        loginId: { type: string }
+        adminNm: { type: string }
+        email: { type: string }
+        mobileNo: { type: string, nullable: true }
+        deptNm: { type: string, nullable: true }
+        statusCd: { type: string, enum: [ACTIVE, LOCKED, DISABLED] }
+        statusNm: { type: string, nullable: true }
+        loginFailCnt: { type: integer }
+        pwdTempYn: { $ref: '#/components/schemas/YnFlag' }
+        pwdChangedDt: { type: string, nullable: true, pattern: '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$' }
+        lastLoginDt: { type: string, nullable: true, pattern: '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$' }
+        roles:
+          type: array
+          items: { $ref: '#/components/schemas/AdminGrantedRole' }
+        self: { type: boolean, description: '본인 계정이면 true (역할 추가·회수, 사용중지 버튼을 숨긴다)' }
+        regNm: { type: string, nullable: true }
+        regDt: { $ref: '#/components/schemas/DateTime' }
+        modNm: { type: string, nullable: true }
+        modDt: { $ref: '#/components/schemas/DateTime' }
+
+    AdminDetailResponse:
+      type: object
+      required: [success, data, error]
+      properties:
+        success: { type: boolean, enum: [true] }
+        data: { $ref: '#/components/schemas/AdminDetail' }
+        error: { $ref: '#/components/schemas/NullError' }
+
+    AdminCreateRequest:
+      type: object
+      required: [loginId, adminNm, email, roleIds]
+      additionalProperties: false
+      properties:
+        loginId: { type: string, pattern: '^[a-z0-9]{4,50}$' }
+        adminNm: { type: string, minLength: 1, maxLength: 50 }
+        email: { type: string, maxLength: 100 }
+        mobileNo: { type: string, nullable: true, pattern: '^[0-9]{10,11}$' }
+        deptNm: { type: string, nullable: true, maxLength: 100 }
+        roleIds:
+          type: array
+          minItems: 1
+          items: { type: integer, format: int64 }
+
+    AdminUpdateRequest:
+      type: object
+      required: [adminNm, email, modDt]
+      additionalProperties: false
+      properties:
+        adminNm: { type: string, minLength: 1, maxLength: 50 }
+        email: { type: string, maxLength: 100 }
+        mobileNo: { type: string, nullable: true, pattern: '^[0-9]{10,11}$' }
+        deptNm: { type: string, nullable: true, maxLength: 100 }
+        modDt: { $ref: '#/components/schemas/DateTime' }
+
+    AdminRoleGrantRequest:
+      type: object
+      required: [roleId]
+      additionalProperties: false
+      properties:
+        roleId: { type: integer, format: int64 }
+
+    AdminStatusRequest:
+      type: object
+      required: [statusCd, modDt]
+      additionalProperties: false
+      properties:
+        statusCd: { type: string, enum: [ACTIVE, DISABLED] }
+        modDt: { $ref: '#/components/schemas/DateTime' }
+
+    AdminCreatedResponse:
+      type: object
+      required: [success, data, error]
+      properties:
+        success: { type: boolean, enum: [true] }
+        data:
+          type: object
+          required: [adminId, tempPassword]
+          properties:
+            adminId: { type: integer, format: int64 }
+            tempPassword: { type: string, description: 한 번만 보여 준다 (BR-02) }
+        error: { $ref: '#/components/schemas/NullError' }
+
+    TempPasswordResponse:
+      type: object
+      required: [success, data, error]
+      properties:
+        success: { type: boolean, enum: [true] }
+        data:
+          type: object
+          required: [tempPassword]
+          properties:
+            tempPassword: { type: string, description: 한 번만 보여 준다 (BR-02) }
+        error: { $ref: '#/components/schemas/NullError' }
+
+    AdminRoleOption:
+      type: object
+      required: [roleId, roleCd, roleNm, useYn, assignable]
+      properties:
+        roleId: { type: integer, format: int64 }
+        roleCd: { type: string }
+        roleNm: { type: string }
+        useYn: { $ref: '#/components/schemas/YnFlag' }
+        assignable: { type: boolean, description: 내가 부여할 수 있는 역할인지 (사용 중 + R5) }
+
+    AdminRoleOptionsResponse:
+      type: object
+      required: [success, data, error]
+      properties:
+        success: { type: boolean, enum: [true] }
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/AdminRoleOption' }
+        error: { $ref: '#/components/schemas/NullError' }
+
+    AdminLoginHistory:
+      type: object
+      required: [regDt, resultCd, resultNm, authTypeCd, ipAddr]
+      properties:
+        regDt: { $ref: '#/components/schemas/DateTime' }
+        resultCd: { type: string }
+        resultNm: { type: string, nullable: true }
+        authTypeCd: { type: string, enum: [SESSION, TOKEN] }
+        ipAddr: { type: string }
+
+    AdminLoginHistoryResponse:
+      type: object
+      required: [success, data, error]
+      properties:
+        success: { type: boolean, enum: [true] }
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/AdminLoginHistory' }
         error: { $ref: '#/components/schemas/NullError' }

@@ -17,10 +17,12 @@
 | API-ADM-09 | POST | `/admins/{adminId}/password-reset` | `UPDATE` | SCR-ADM-02 | ADM-07 비밀번호 초기화 |
 | API-ADM-10 | PATCH | `/admins/{adminId}/status` | `DELETE` | SCR-ADM-02 | ADM-08 사용중지 / 재사용 |
 | API-ADM-11 | GET | `/admins/{adminId}/login-histories` | `READ` | SCR-ADM-02 | ADM-09 최근 로그인 이력 20건 |
+| API-ADM-12 | GET | `/admins/role-options` | `READ` | SCR-ADM-01~03 | 역할 선택 목록 (목록 검색 상자, 역할 부여·등록) |
 
 ## 목록 (API-ADM-01)
 
 **파라미터**: `loginId`, `adminNm`, `deptNm`, `roleId`, `statusCd`, `page`, `size`, `sort` (정렬: `loginId`, `adminNm`, `lastLoginDt`, `regDt`)
+- `keyword`: 로그인 아이디·이름 중 하나라도 포함 (관리자 선택창 CMP-12용).
 **항목**: `adminId`, `loginId`, `adminNm`, `deptNm`, `roles`(`roleId`, `roleNm` 배열), `statusCd`, `statusNm`, `lastLoginDt`, `regDt`
 
 ## 상세 (API-ADM-02)
@@ -64,6 +66,13 @@
 ```
 
 - `statusCd`는 `DISABLED`(사용중지) 또는 `ACTIVE`(재사용)만 받는다. 잠금 해제는 API-ADM-08.
+
+## 역할 선택 목록 (API-ADM-12)
+
+**항목**: `roleId`, `roleCd`, `roleNm`, `useYn`, `assignable`
+
+- `assignable`: 사용 중이고, 역할의 권한이 모두 내 권한 안에 있는 역할 (R5). 슈퍼관리자 역할은 슈퍼관리자만 줄 수 있다. 슈퍼관리자면 사용 중인 역할 전체.
+- 관리자관리 권한만 있고 역할관리 권한이 없는 관리자도 역할을 고를 수 있도록 역할 API(`/roles`) 대신 이 API를 쓴다.
 
 ## 업무 오류 코드
 

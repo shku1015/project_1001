@@ -123,6 +123,18 @@
     return value ? value.replace('T', ' ').substring(0, 16) : '-';
   }
 
+  /** "2026-10-04T14:30:15" → "2026-10-04 14:30:15" (상세 화면) */
+  function formatDateTimeSec(value) {
+    return value ? value.replace('T', ' ').substring(0, 19) : '-';
+  }
+
+  /** "01012345678" → "010-1234-5678" */
+  function formatMobile(value) {
+    if (!value) { return '-'; }
+    return value.length === 11 ? value.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3')
+      : value.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
+  }
+
   function formatDate(value) {
     return value ? value.substring(0, 10) : '-';
   }
@@ -136,6 +148,8 @@
     showFlash: showFlash,
     formatDateTime: formatDateTime,
     formatDate: formatDate,
+    formatDateTimeSec: formatDateTimeSec,
+    formatMobile: formatMobile,
     el: el
   };
 })(window);

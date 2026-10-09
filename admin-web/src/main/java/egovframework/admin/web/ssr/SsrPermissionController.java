@@ -15,6 +15,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import egovframework.admin.admin.AdminManageMapper;
+import egovframework.admin.admin.AdminManageService;
 import egovframework.admin.auth.AdminAuthInfoService;
 import egovframework.admin.auth.AuthTypes.Action;
 import egovframework.admin.common.BusinessException;
@@ -35,14 +37,39 @@ public class SsrPermissionController {
     private static final String PERMISSION = "PERMISSION";
 
     private final PermissionAdminService permissionAdminService;
+    private final AdminManageService adminManageService;
     private final AdminAuthInfoService authInfoService;
     private final ObjectMapper objectMapper;
 
     public SsrPermissionController(PermissionAdminService permissionAdminService,
-                                   AdminAuthInfoService authInfoService, ObjectMapper objectMapper) {
+                                   AdminManageService adminManageService, AdminAuthInfoService authInfoService,
+                                   ObjectMapper objectMapper) {
         this.permissionAdminService = permissionAdminService;
+        this.adminManageService = adminManageService;
         this.authInfoService = authInfoService;
         this.objectMapper = objectMapper;
+    }
+
+    /**
+     * SCR-PRM-02 관리자별 최종 권한. 관리자 선택창(CMP-12)은 이름·아이디 검색 결과(10건)를 같은 화면에 보여 준다.
+     */
+    @GetMapping("/ssr/permissions/admins")
+    @RequirePermission(menu = PERMISSION, action = Action.READ)
+    public String adminPermissions(@RequestParam(required = false) String keyword,
+                                   @RequestParam(required = false) Long adminId, Model model) {
+        if (keyword != null && !keyword.isBlank()) {
+            model.addAttribute("candidates", adminManageService.getAdmins(
+                    new AdminManageMapper.Search(keyword.trim(), null, null, null, null, null), 1, 10, List.of()));
+        }
+        if (adminId != null) {
+            try {
+                model.addAttribute("effective", permissionAdminService.getEffectivePermissions(adminId));
+            } catch (BusinessException e) {
+                model.addAttribute("error", e.getMessage());
+            }
+        }
+        model.addAttribute("allActions", Action.values());
+        return "ssr/permission-admin";
     }
 
     @GetMapping("/ssr/permissions")

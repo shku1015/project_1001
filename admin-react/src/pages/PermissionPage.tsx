@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react'
+import { Link } from 'react-router'
 import * as api from '../api/permission'
 import type { MenuRoleGrants, PermissionMenuNode } from '../api/permission'
 import { ApiError } from '../api/client'
@@ -91,6 +92,7 @@ export function PermissionPage() {
         {notice && <div className="alert alert-success" role="status">{notice}</div>}
         {error && <div className="alert alert-danger" role="alert">{error}</div>}
       </div>
+      <div className="mb-3 text-end"><Link className="btn btn-sm" id="btn-effective" to="/permissions/admins">관리자별 최종 권한</Link></div>
       <div className="row row-cards">
         <div className="col-lg-4">
           <div className="card" id="perm-menu-card">

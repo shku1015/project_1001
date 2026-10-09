@@ -27,6 +27,7 @@ export default async function globalSetup() {
   await client.connect()
   try {
     await client.query('BEGIN')
+    // e2e_*: 시나리오용 계정, e2eadm*: 관리자관리 E2E가 화면에서 등록한 계정 (아이디 규칙상 _를 쓸 수 없다)
     const ids = ["e2e\\_%"]
     for (const sql of [
       'DELETE FROM tb_admin_refresh_token WHERE admin_id IN (SELECT admin_id FROM tb_admin WHERE login_id LIKE $1)',
@@ -36,6 +37,7 @@ export default async function globalSetup() {
       'DELETE FROM tb_admin WHERE login_id LIKE $1',
     ]) {
       await client.query(sql, ids)
+      await client.query(sql, ['e2eadm%'])
     }
     // E2E가 만든 코드관리 데이터 정리 (반복 실행 안전)
     await client.query("DELETE FROM tb_code WHERE group_cd LIKE 'E2E\\_%'")

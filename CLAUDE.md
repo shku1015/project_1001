@@ -74,7 +74,7 @@
 - 기능 모듈 하나를 구현할 때는 `/implement-feature <기능 ID 접두어>` 명령의 순서(명세→DB→Service→API→세 프론트→테스트→추적표)를 따른다.
 - 진행 현황은 [docs/traceability.md](docs/traceability.md)에서 확인하고, 구현 후 갱신한다.
 
-## 현재 단계: M2(코드관리·메뉴관리) 완료, M3 시작 전
+## 현재 단계: M3(역할·권한·관리자관리) 완료, M4 시작 전
 
 - 개발은 [docs/08-architecture.md](docs/08-architecture.md) 9절의 개발 순서를 따른다.
 - API는 명세 우선이다. API를 추가·변경할 때는 `api/openapi.yaml`을 먼저 고치고, 서버는 계약 테스트로, React는 생성 타입으로 맞춘다 ([docs/adr/0020-openapi-spec-first.md](docs/adr/0020-openapi-spec-first.md)).
