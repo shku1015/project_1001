@@ -108,7 +108,7 @@
                             <tbody>
                             <c:forEach var="a" items="${admins}">
                                 <tr>
-                                    <td><c:out value="${a.loginId()}"/></td>
+                                    <td><a href="<c:url value='/ssr/admins/${a.adminId()}'/>"><c:out value="${a.loginId()}"/></a></td>
                                     <td><c:out value="${a.adminNm()}"/></td>
                                     <td><c:out value="${empty a.deptNm() ? '-' : a.deptNm()}"/></td>
                                     <td><c:out value="${a.statusNm()}"/></td>

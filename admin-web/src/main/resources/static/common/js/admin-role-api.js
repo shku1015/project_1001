@@ -76,7 +76,7 @@
     var admins = await AdminApi.get(BASE + '/' + roleId + '/admins');
     byId('tab-admins').textContent = '관리자 (' + role.adminCnt + ')';
     byId('admin-tbody').innerHTML = admins.length ? admins.map(function (a) {
-      return '<tr><td>' + esc(a.loginId) + '</td><td>' + esc(a.adminNm) + '</td><td>' + esc(a.deptNm || '-') + '</td>' +
+      return '<tr><td><a href="/jsp/admins/' + a.adminId + '">' + esc(a.loginId) + '</a></td><td>' + esc(a.adminNm) + '</td><td>' + esc(a.deptNm || '-') + '</td>' +
         '<td>' + esc(a.statusNm) + '</td><td>' + AdminJsp.formatDateTime(a.grantedDt) + '</td></tr>';
     }).join('') : '<tr><td colspan="5" class="text-secondary text-center">이 역할을 가진 관리자가 없습니다</td></tr>';
 

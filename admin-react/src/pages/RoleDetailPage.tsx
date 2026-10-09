@@ -192,7 +192,7 @@ export function RoleDetailPage() {
                 <thead><tr><th>로그인 아이디</th><th>이름</th><th>부서</th><th>상태</th><th>부여일시</th></tr></thead>
                 <tbody>
                   {admins.map((a) => (
-                    <tr key={a.adminId}><td>{a.loginId}</td><td>{a.adminNm}</td><td>{a.deptNm || '-'}</td><td>{a.statusNm}</td><td>{formatDateTime(a.grantedDt)}</td></tr>
+                    <tr key={a.adminId}><td><Link to={`/admins/${a.adminId}`}>{a.loginId}</Link></td><td>{a.adminNm}</td><td>{a.deptNm || '-'}</td><td>{a.statusNm}</td><td>{formatDateTime(a.grantedDt)}</td></tr>
                   ))}
                   {admins.length === 0 && <tr><td colSpan={5} className="text-secondary text-center">이 역할을 가진 관리자가 없습니다</td></tr>}
                 </tbody>

@@ -65,6 +65,33 @@ public class JspPageController {
         return "jsp/permission";
     }
 
+    @GetMapping("/jsp/permissions/admins")
+    public String permissionAdmins() {
+        return "jsp/permission-admin";
+    }
+
+    @GetMapping("/jsp/admins")
+    public String admins() {
+        return "jsp/admin-list";
+    }
+
+    @GetMapping("/jsp/admins/new")
+    public String adminNew() {
+        return "jsp/admin-form";
+    }
+
+    @GetMapping("/jsp/admins/{adminId}")
+    public String admin(@PathVariable long adminId, Model model) {
+        model.addAttribute("adminId", adminId);
+        return "jsp/admin-detail";
+    }
+
+    @GetMapping("/jsp/admins/{adminId}/edit")
+    public String adminEdit(@PathVariable long adminId, Model model) {
+        model.addAttribute("adminId", adminId);
+        return "jsp/admin-form";
+    }
+
     @GetMapping("/jsp/roles")
     public String roles() {
         return "jsp/role-list";

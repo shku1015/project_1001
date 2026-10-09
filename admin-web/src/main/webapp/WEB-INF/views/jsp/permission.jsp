@@ -11,6 +11,7 @@
         <script src="<c:url value='/common/js/admin-permission-api.js'/>"></script>
     </jsp:attribute>
     <jsp:body>
+        <div class="mb-3 text-end"><a class="btn btn-sm" id="btn-effective" href="<c:url value='/jsp/permissions/admins'/>">관리자별 최종 권한</a></div>
         <div class="row row-cards">
             <div class="col-lg-4">
                 <div class="card" id="perm-menu-card">

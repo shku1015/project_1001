@@ -17,3 +17,8 @@ export const getMenuGrants = (menuId: number): Promise<MenuRoleGrants> =>
 
 export const saveMenuGrants = (menuId: number, body: MenuRoleGrantSaveRequest): Promise<{ changes: RoleGrantChange[] }> =>
   call({ method: 'PUT', url: `/permissions/menus/${menuId}`, data: body })
+
+export type AdminEffectivePermissions = S['AdminEffectivePermissionResponse']['data']
+
+export const getAdminPermissions = (adminId: number): Promise<AdminEffectivePermissions> =>
+  call({ method: 'GET', url: `/permissions/admins/${adminId}` })

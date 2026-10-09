@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.admin.admin.AdminManageMapper">
+
+    <sql id="searchWhere">
+        <where>
+            <if test="s.keyword != null and s.keyword != ''">
+                (a.login_id ILIKE '%' || #{s.keyword} || '%' OR a.admin_nm ILIKE '%' || #{s.keyword} || '%')
+            </if>
+            <if test="s.loginId != null and s.loginId != ''">AND a.login_id ILIKE '%' || #{s.loginId} || '%'</if>
+            <if test="s.adminNm != null and s.adminNm != ''">AND a.admin_nm ILIKE '%' || #{s.adminNm} || '%'</if>
+            <if test="s.deptNm != null and s.deptNm != ''">AND a.dept_nm ILIKE '%' || #{s.deptNm} || '%'</if>
+            <if test="s.roleId != null">
+                AND EXISTS (SELECT 1 FROM tb_admin_role ar WHERE ar.admin_id = a.admin_id AND ar.role_id = #{s.roleId})
+            </if>
+            <if test="s.statusCd != null and s.statusCd != ''">AND a.status_cd = #{s.statusCd}</if>
+        </where>
+    </sql>
+
+    <select id="countAdmins" resultType="long">
+        SELECT count(*) FROM tb_admin a <include refid="searchWhere"/>
+    </select>
+
+    <!-- 정렬 절(q.orderBy)은 PageQuery가 허용 목록의 칼럼으로만 만든다 -->
+    <select id="selectAdmins" resultType="egovframework.admin.admin.AdminManageMapper$ListRow">
+        SELECT a.admin_id, a.login_id, a.admin_nm, a.dept_nm, a.status_cd, c.code_nm AS status_nm,
+               a.last_login_dt, a.reg_dt
+        FROM tb_admin a
+        LEFT JOIN tb_code c ON c.group_cd = 'ADMIN_STATUS' AND c.code = a.status_cd
+        <include refid="searchWhere"/>
+        ORDER BY ${q.orderBy}
+        LIMIT #{q.size} OFFSET #{offset}
+    </select>
+
+    <select id="selectRolesOf" resultType="egovframework.admin.admin.AdminManageMapper$RoleOfAdmin">
+        SELECT ar.admin_id, r.role_id, r.role_nm
+        FROM tb_admin_role ar JOIN tb_role r ON r.role_id = ar.role_id
+        WHERE ar.admin_id IN <foreach collection="adminIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+        ORDER BY ar.admin_id, r.role_id
+    </select>
+
+    <select id="selectAdmin" resultType="egovframework.admin.admin.AdminManageMapper$DetailRow">
+        SELECT a.admin_id, a.login_id, a.admin_nm, a.email, a.mobile_no, a.dept_nm, a.status_cd,
+               c.code_nm AS status_nm, a.login_fail_cnt, a.pwd_temp_yn, a.pwd_changed_dt, a.last_login_dt,
+               ra.admin_nm AS reg_nm, a.reg_dt, ma.admin_nm AS mod_nm, a.mod_dt
+        FROM tb_admin a
+        LEFT JOIN tb_code c ON c.group_cd = 'ADMIN_STATUS' AND c.code = a.status_cd
+        LEFT JOIN tb_admin ra ON ra.admin_id = a.reg_id
+        LEFT JOIN tb_admin ma ON ma.admin_id = a.mod_id
+        WHERE a.admin_id = #{adminId}
+    </select>
+
+    <select id="selectGrantedRoles" resultType="egovframework.admin.admin.AdminManageMapper$GrantedRoleRow">
+        SELECT r.role_id, r.role_cd, r.role_nm, r.use_yn, r.system_yn, g.admin_nm AS reg_nm, ar.reg_dt
+        FROM tb_admin_role ar
+        JOIN tb_role r ON r.role_id = ar.role_id
+        LEFT JOIN tb_admin g ON g.admin_id = ar.reg_id
+        WHERE ar.admin_id = #{adminId}
+        ORDER BY r.role_id
+    </select>
+
+    <select id="existsLoginId" resultType="boolean">
+        SELECT EXISTS (SELECT 1 FROM tb_admin WHERE login_id = #{loginId})
+    </select>
+
+    <!-- 임시 비밀번호 상태로 만든다 (pwd_temp_yn 기본값 Y) -->
+    <select id="insertAdmin" resultType="long" flushCache="true">
+        INSERT INTO tb_admin (login_id, password, admin_nm, email, mobile_no, dept_nm, status_cd, pwd_temp_yn,
+                              reg_id, mod_id)
+        VALUES (#{loginId}, #{password}, #{adminNm}, #{email}, #{mobileNo}, #{deptNm}, 'ACTIVE', 'Y', #{regId}, #{regId})
+        RETURNING admin_id
+    </select>
+
+    <update id="updateInfo">
+        UPDATE tb_admin
+        SET admin_nm = #{adminNm}, email = #{email}, mobile_no = #{mobileNo}, dept_nm = #{deptNm},
+            mod_id = #{modId}, mod_dt = now()
+        WHERE admin_id = #{adminId}
+          AND date_trunc('second', mod_dt) = date_trunc('second', #{modDt}::timestamp)
+    </update>
+
+    <insert id="insertAdminRole">
+        INSERT INTO tb_admin_role (admin_id, role_id, reg_id) VALUES (#{adminId}, #{roleId}, #{regId})
+        ON CONFLICT (admin_id, role_id) DO NOTHING
+    </insert>
+
+    <delete id="deleteAdminRole">
+        DELETE FROM tb_admin_role WHERE admin_id = #{adminId} AND role_id = #{roleId}
+    </delete>
+
+    <update id="updateStatus">
+        UPDATE tb_admin
+        SET status_cd = #{statusCd},
+            <if test="resetFail">login_fail_cnt = 0,</if>
+            mod_id = #{modId}, mod_dt = now()
+        WHERE admin_id = #{adminId}
+        <if test="modDt != null">
+          AND date_trunc('second', mod_dt) = date_trunc('second', #{modDt}::timestamp)
+        </if>
+    </update>
+
+    <update id="updateTempPassword">
+        UPDATE tb_admin
+        SET password = #{password}, pwd_temp_yn = 'Y', mod_id = #{modId}, mod_dt = now()
+        WHERE admin_id = #{adminId}
+    </update>
+
+    <select id="countActiveSuperAdmins" resultType="int">
+        SELECT count(DISTINCT a.admin_id)
+        FROM tb_admin a
+        JOIN tb_admin_role ar ON ar.admin_id = a.admin_id
+        JOIN tb_role r ON r.role_id = ar.role_id AND r.role_cd = 'SUPER_ADMIN' AND r.use_yn = 'Y'
+        WHERE a.status_cd = 'ACTIVE'
+    </select>
+
+    <select id="selectRoles" resultType="egovframework.admin.admin.AdminManageMapper$RoleRow">
+        SELECT role_id, role_cd, role_nm, use_yn, system_yn FROM tb_role ORDER BY role_id
+    </select>
+
+    <select id="selectRolePermissions" resultType="egovframework.admin.admin.AdminManageMapper$RolePermRow">
+        SELECT rp.role_id, m.menu_cd, p.action_cd
+        FROM tb_role_permission rp
+        JOIN tb_permission p ON p.perm_id = rp.perm_id
+        JOIN tb_menu m ON m.menu_id = p.menu_id
+    </select>
+
+    <select id="selectLoginHistories" resultType="egovframework.admin.admin.AdminManageMapper$LoginHistRow">
+        SELECT h.reg_dt, h.result_cd, c.code_nm AS result_nm, h.auth_type_cd, h.ip_addr
+        FROM tb_admin_login_hist h
+        LEFT JOIN tb_code c ON c.group_cd = 'LOGIN_RESULT' AND c.code = h.result_cd
+        WHERE h.admin_id = #{adminId}
+        ORDER BY h.reg_dt DESC, h.hist_id DESC
+        LIMIT #{limit}
+    </select>
+</mapper>
