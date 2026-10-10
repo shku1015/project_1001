@@ -18,10 +18,11 @@
 | API-USR-10 | POST | `/users/{userId}/password-reset` | `UPDATE` | SCR-USR-02 | USR-08 비밀번호 초기화 |
 | API-USR-11 | DELETE | `/users/{userId}` | `DELETE` | SCR-USR-02 | USR-09 삭제 |
 | API-USR-12 | GET | `/users/{userId}/status-histories` | `READ` | SCR-USR-02 | USR-10 상태 변경 이력 |
+| API-USR-13 | GET | `/users/company-options?keyword=` | `READ` | SCR-USR-03 | 소속 기업 선택 목록 (정상 기업만, 최대 100건) |
 
 ## 목록 (API-USR-01)
 
-**검색 파라미터**: `userTypeCd`, `loginId`, `userNm`, `email`, `mobileNo`, `companyNm`, `statusCd`, `joinPath`(`USER_SERVICE` / `ADMIN`), `joinDtFrom`, `joinDtTo`, `page`, `size`, `sort`
+**검색 파라미터**: `userTypeCd`, `loginId`, `userNm`, `email`, `mobileNo`, `companyId`(기업 상세의 [전체 보기]), `companyNm`, `statusCd`, `joinPath`(`USER_SERVICE` / `ADMIN`), `joinDtFrom`, `joinDtTo`, `page`, `size`, `sort`
 **정렬 가능**: `loginId`, `userNm`, `joinDt` (기본 `joinDt,desc`)
 
 **항목**: `userId`, `userTypeCd`, `userTypeNm`, `loginId`, `userNm`, `email`, `mobileNo`, `companyId`, `companyNm`, `statusCd`, `statusNm`, `joinDt`

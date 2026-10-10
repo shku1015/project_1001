@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.admin.user.UserAdminMapper">
+
+    <sql id="searchWhere">
+        WHERE u.del_yn = 'N'
+        <if test="s.userTypeCd != null and s.userTypeCd != ''">AND u.user_type_cd = #{s.userTypeCd}</if>
+        <if test="s.loginId != null and s.loginId != ''">AND u.login_id ILIKE '%' || #{s.loginId} || '%'</if>
+        <if test="s.userNm != null and s.userNm != ''">AND u.user_nm ILIKE '%' || #{s.userNm} || '%'</if>
+        <if test="s.email != null and s.email != ''">AND u.email ILIKE '%' || #{s.email} || '%'</if>
+        <if test="s.mobileNo != null and s.mobileNo != ''">AND u.mobile_no LIKE '%' || #{s.mobileNo} || '%'</if>
+        <if test="s.companyId != null">AND u.company_id = #{s.companyId}</if>
+        <if test="s.companyNm != null and s.companyNm != ''">AND c.company_nm ILIKE '%' || #{s.companyNm} || '%'</if>
+        <if test="s.statusCd != null and s.statusCd != ''">AND u.status_cd = #{s.statusCd}</if>
+        <!-- 가입 경로: 관리자가 등록했으면 reg_id가 있다 -->
+        <if test="s.joinPath == 'ADMIN'">AND u.reg_id IS NOT NULL</if>
+        <if test="s.joinPath == 'USER_SERVICE'">AND u.reg_id IS NULL</if>
+        <if test="s.joinDtFrom != null">AND u.join_dt &gt;= #{s.joinDtFrom}</if>
+        <if test="s.joinDtTo != null">AND u.join_dt &lt; #{s.joinDtTo}::date + 1</if>
+    </sql>
+
+    <sql id="listColumns">
+        u.user_id, u.user_type_cd, t.code_nm AS user_type_nm, u.login_id, u.user_nm, u.email, u.mobile_no,
+        u.company_id, c.company_nm, u.status_cd, st.code_nm AS status_nm, u.join_dt
+    </sql>
+
+    <sql id="listJoins">
+        LEFT JOIN tb_company c ON c.company_id = u.company_id
+        LEFT JOIN tb_code t ON t.group_cd = 'USER_TYPE' AND t.code = u.user_type_cd
+        LEFT JOIN tb_code st ON st.group_cd = 'USER_STATUS' AND st.code = u.status_cd
+    </sql>
+
+    <select id="countUsers" resultType="long">
+        SELECT count(*) FROM tb_user u LEFT JOIN tb_company c ON c.company_id = u.company_id
+        <include refid="searchWhere"/>
+    </select>
+
+    <!-- 정렬 절(orderBy)은 PageQuery가 허용 목록의 칼럼으로만 만든다 -->
+    <select id="selectUsers" resultType="egovframework.admin.user.UserAdminMapper$ListRow">
+        SELECT <include refid="listColumns"/>
+        FROM tb_user u <include refid="listJoins"/>
+        <include refid="searchWhere"/>
+        ORDER BY ${orderBy}
+        <if test="limit != null">LIMIT #{limit} OFFSET #{offset}</if>
+    </select>
+
+    <select id="selectUser" resultType="egovframework.admin.user.UserAdminMapper$DetailRow">
+        SELECT <include refid="listColumns"/>, u.birth_date, u.dept_nm, u.position_nm,
+               CASE WHEN u.reg_id IS NULL THEN 'USER_SERVICE' ELSE 'ADMIN' END AS join_path,
+               u.pwd_temp_yn, u.last_login_dt, u.withdraw_dt, ra.admin_nm AS reg_nm, u.reg_dt,
+               ma.admin_nm AS mod_nm, u.mod_dt
+        FROM tb_user u <include refid="listJoins"/>
+        LEFT JOIN tb_admin ra ON ra.admin_id = u.reg_id
+        LEFT JOIN tb_admin ma ON ma.admin_id = u.mod_id
+        WHERE u.user_id = #{userId} AND u.del_yn = 'N'
+    </select>
+
+    <select id="existsLoginId" resultType="boolean">
+        SELECT EXISTS (SELECT 1 FROM tb_user WHERE login_id = #{loginId})
+    </select>
+
+    <select id="selectCompanyStatus" resultType="string">
+        SELECT status_cd FROM tb_company WHERE company_id = #{companyId} AND del_yn = 'N'
+    </select>
+
+    <select id="selectCompanyOptions" resultType="egovframework.admin.user.UserAdminMapper$CompanyOption">
+        SELECT company_id, company_nm, biz_reg_no
+        FROM tb_company
+        WHERE del_yn = 'N' AND status_cd = 'ACTIVE'
+        <if test="keyword != null and keyword != ''">
+            AND (company_nm ILIKE '%' || #{keyword} || '%' OR biz_reg_no LIKE '%' || #{keyword} || '%')
+        </if>
+        ORDER BY company_nm, company_id
+        LIMIT #{limit}
+    </select>
+
+    <!-- 관리자 등록: 정상 상태, 가입 일시는 등록 일시, 임시 비밀번호 (BR-06) -->
+    <select id="insertUser" resultType="long" flushCache="true">
+        INSERT INTO tb_user (login_id, password, pwd_temp_yn, user_type_cd, company_id, user_nm, email, mobile_no,
+                             birth_date, dept_nm, position_nm, status_cd, join_dt, reg_id, mod_id)
+        VALUES (#{loginId}, #{password}, 'Y', #{userTypeCd}, #{v.companyId}, #{v.userNm}, #{v.email}, #{v.mobileNo},
+                #{v.birthDate}, #{v.deptNm}, #{v.positionNm}, 'ACTIVE', now(), #{regId}, #{regId})
+        RETURNING user_id
+    </select>
+
+    <update id="updateUser">
+        UPDATE tb_user
+        SET user_nm = #{v.userNm}, email = #{v.email}, mobile_no = #{v.mobileNo}, birth_date = #{v.birthDate},
+            company_id = #{v.companyId}, dept_nm = #{v.deptNm}, position_nm = #{v.positionNm},
+            mod_id = #{modId}, mod_dt = now()
+        WHERE user_id = #{userId} AND del_yn = 'N'
+          AND date_trunc('second', mod_dt) = date_trunc('second', #{modDt}::timestamp)
+    </update>
+
+    <update id="updateStatus">
+        UPDATE tb_user
+        SET status_cd = #{statusCd},
+            <if test="statusCd == 'WITHDRAWN'">withdraw_dt = now(),</if>
+            mod_id = #{modId}, mod_dt = now()
+        WHERE user_id = #{userId} AND del_yn = 'N'
+          AND date_trunc('second', mod_dt) = date_trunc('second', #{modDt}::timestamp)
+    </update>
+
+    <insert id="insertStatusHist">
+        INSERT INTO tb_user_status_hist (user_id, before_status_cd, after_status_cd, reason, reg_id)
+        VALUES (#{userId}, #{beforeStatusCd}, #{afterStatusCd}, #{reason}, #{regId})
+    </insert>
+
+    <update id="updateTempPassword">
+        UPDATE tb_user SET password = #{password}, pwd_temp_yn = 'Y', mod_id = #{modId}, mod_dt = now()
+        WHERE user_id = #{userId}
+    </update>
+
+    <update id="deleteUser">
+        UPDATE tb_user SET del_yn = 'Y', mod_id = #{modId}, mod_dt = now() WHERE user_id = #{userId}
+    </update>
+
+    <select id="selectStatusHistories" resultType="egovframework.admin.user.UserAdminMapper$HistoryRow">
+        SELECT h.reg_dt, h.before_status_cd, b.code_nm AS before_status_nm, h.after_status_cd,
+               a.code_nm AS after_status_nm, h.reason, ad.admin_nm AS reg_nm
+        FROM tb_user_status_hist h
+        LEFT JOIN tb_code b ON b.group_cd = 'USER_STATUS' AND b.code = h.before_status_cd
+        LEFT JOIN tb_code a ON a.group_cd = 'USER_STATUS' AND a.code = h.after_status_cd
+        LEFT JOIN tb_admin ad ON ad.admin_id = h.reg_id
+        WHERE h.user_id = #{userId}
+        ORDER BY h.reg_dt DESC, h.hist_id DESC
+    </select>
+
+    <select id="selectPrivacyReasonNm" resultType="string">
+        SELECT code_nm FROM tb_code WHERE group_cd = 'PRIVACY_REASON' AND code = #{reasonCd} AND use_yn = 'Y'
+    </select>
+</mapper>

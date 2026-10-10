@@ -1,6 +1,5 @@
 package egovframework.admin.admin;
 
-import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -29,6 +28,7 @@ import egovframework.admin.common.BusinessException;
 import egovframework.admin.common.ErrorCode;
 import egovframework.admin.common.PageQuery;
 import egovframework.admin.common.PageResult;
+import egovframework.admin.common.TempPassword;
 
 /**
  * 관리자관리 (docs/04-features/06-admin.md). 보호 규칙은 docs/02-access-model.md 5절
@@ -41,10 +41,6 @@ public class AdminManageService {
     private static final String ADMIN = "ADMIN";
     private static final String SUPER_ADMIN = AdminAuthInfoService.SUPER_ADMIN_ROLE;
     private static final int HISTORY_LIMIT = 20;
-    /** 임시 비밀번호 글자 (헷갈리는 0/O, 1/l/I 제외) */
-    private static final String TEMP_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
-    private static final int TEMP_LENGTH = 10;
-    private static final SecureRandom RANDOM = new SecureRandom();
 
     /** 목록 정렬 가능 필드 (화면 명세 SCR-ADM-01의 정렬 ○) */
     private static final Map<String, String> SORTABLE = Map.of(
@@ -167,7 +163,7 @@ public class AdminManageService {
         for (long roleId : roleIds) {
             checkAssignable(myAdminId, roleId);
         }
-        String tempPassword = tempPassword();
+        String tempPassword = TempPassword.generate();
         long adminId = mapper.insertAdmin(cmd.loginId(), passwordEncoder.encode(tempPassword), cmd.adminNm().trim(),
                 cmd.email().trim(), blankToNull(cmd.mobileNo()), blankToNull(cmd.deptNm()), myAdminId);
         roleIds.forEach(roleId -> mapper.insertAdminRole(adminId, roleId, myAdminId));
@@ -251,7 +247,7 @@ public class AdminManageService {
         if ("DISABLED".equals(admin.statusCd())) {
             throw new BusinessException(ErrorCode.INVALID_STATUS_CHANGE);
         }
-        String tempPassword = tempPassword();
+        String tempPassword = TempPassword.generate();
         mapper.updateTempPassword(adminId, passwordEncoder.encode(tempPassword), myAdminId);
         // 비밀번호 값은 감사로그에 남기지 않는다
         audit(myAdminId, ipAddr, "UPDATE", adminId, "비밀번호 초기화: " + admin.loginId(), null, null);
@@ -360,14 +356,6 @@ public class AdminManageService {
         m.put("mobileNo", mobileNo);
         m.put("deptNm", deptNm);
         return m;
-    }
-
-    private static String tempPassword() {
-        StringBuilder sb = new StringBuilder(TEMP_LENGTH);
-        for (int i = 0; i < TEMP_LENGTH; i++) {
-            sb.append(TEMP_CHARS.charAt(RANDOM.nextInt(TEMP_CHARS.length())));
-        }
-        return sb.toString();
     }
 
     private static String blankToNull(String value) {

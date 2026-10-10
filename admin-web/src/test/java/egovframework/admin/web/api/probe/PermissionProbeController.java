@@ -23,6 +23,13 @@ public class PermissionProbeController {
         return ApiResponse.ok("ok");
     }
 
+    /** 회원 등록처럼 두 액션(CREATE, PRIVACY)이 모두 있어야 통과 */
+    @GetMapping("/user-create")
+    @RequirePermission(menu = "USER", action = Action.CREATE, also = Action.PRIVACY)
+    public ApiResponse<String> userCreate() {
+        return ApiResponse.ok("ok");
+    }
+
     /** 게시글처럼 통합 메뉴 또는 게시판별 메뉴 중 하나의 권한이면 통과 */
     @GetMapping("/boards/{boardCd}/posts")
     @RequirePermission(menu = {"POST", "POST_{boardCd}"}, action = Action.UPDATE)

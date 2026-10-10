@@ -15,6 +15,9 @@ import { MenuPage } from './pages/MenuPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 import { PasswordPage } from './pages/PasswordPage'
 import { PermissionPage } from './pages/PermissionPage'
+import { UserDetailPage } from './pages/UserDetailPage'
+import { UserFormPage } from './pages/UserFormPage'
+import { UserListPage } from './pages/UserListPage'
 import { RoleDetailPage } from './pages/RoleDetailPage'
 import { RoleFormPage } from './pages/RoleFormPage'
 import { RoleListPage } from './pages/RoleListPage'
@@ -27,6 +30,10 @@ export function App() {
       <Route path="/" element={<RequireAuth><HomePage /></RequireAuth>} />
       <Route path="/me" element={<RequireAuth><MePage /></RequireAuth>} />
       <Route path="/menus" element={<RequireAuth><MenuPage /></RequireAuth>} />
+      <Route path="/users" element={<RequireAuth><UserListPage /></RequireAuth>} />
+      <Route path="/users/new" element={<RequireAuth><UserFormPage /></RequireAuth>} />
+      <Route path="/users/:userId" element={<RequireAuth><UserDetailPage /></RequireAuth>} />
+      <Route path="/users/:userId/edit" element={<RequireAuth><UserFormPage /></RequireAuth>} />
       <Route path="/companies" element={<RequireAuth><CompanyListPage /></RequireAuth>} />
       <Route path="/companies/new" element={<RequireAuth><CompanyFormPage /></RequireAuth>} />
       <Route path="/companies/:companyId" element={<RequireAuth><CompanyDetailPage /></RequireAuth>} />

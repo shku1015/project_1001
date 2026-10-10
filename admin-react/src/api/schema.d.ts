@@ -807,6 +807,191 @@ export interface paths {
         patch: operations["changeCompanyStatus"];
         trace?: never;
     };
+    "/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 회원 목록 (USR-01). 삭제된 회원 제외, 기본 정렬 가입일시 역순. 개인정보는 화면 마스킹 설정을 따른다 */
+        get: operations["listUsers"];
+        put?: never;
+        /** 회원 등록 (USR-04). CREATE와 PRIVACY 권한이 모두 필요. 임시 비밀번호를 한 번만 돌려준다 */
+        post: operations["createUser"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/users/excel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 엑셀 다운로드 (USR-11). 엑셀 마스킹 설정을 따르고, 마스킹 N 항목은 PRIVACY 권한이 있을 때만 원문 */
+        get: operations["downloadUserExcel"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/users/check-login-id": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 로그인 아이디 중복 확인 (삭제된 회원의 아이디도 쓸 수 없다) */
+        get: operations["checkUserLoginId"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/users/company-options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 소속 기업 선택 목록. 정상 기업만, 기업명·사업자등록번호로 찾는다 (최대 100건, 기업명순) */
+        get: operations["getUserCompanyOptions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/users/{userId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: components["parameters"]["UserId"];
+            };
+            cookie?: never;
+        };
+        /** 회원 상세 (USR-02). 개인정보는 화면 마스킹 설정을 따르고, 가린 항목은 maskedFields로 알려 준다 */
+        get: operations["getUser"];
+        /** 회원 정보·소속 기업 수정 (USR-05, 06). UPDATE와 PRIVACY 권한이 모두 필요. 회원 구분·아이디는 무시 */
+        put: operations["updateUser"];
+        post?: never;
+        /** 회원 삭제 (USR-09). 삭제 표시, 사유 필수. 어느 상태에서든 할 수 있다 */
+        delete: operations["deleteUser"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/users/{userId}/privacy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: components["parameters"]["UserId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** 개인정보 원문 보기 (USR-03). 사유 코드(PRIVACY_REASON), 기타면 직접 입력. 부를 때마다 감사로그 */
+        post: operations["viewUserPrivacy"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/users/{userId}/form": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: components["parameters"]["UserId"];
+            };
+            cookie?: never;
+        };
+        /** 수정 화면용 원문 조회. UPDATE와 PRIVACY 권한이 모두 필요. 감사로그(사유 DATA_CORRECTION). 탈퇴 회원은 USER_WITHDRAWN */
+        get: operations["getUserForm"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/users/{userId}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: components["parameters"]["UserId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** 상태 변경 (USR-07). 정지·정지 해제·휴면 해제·강제 탈퇴, 사유 필수. 이력을 남긴다 */
+        patch: operations["changeUserStatus"];
+        trace?: never;
+    };
+    "/users/{userId}/password-reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: components["parameters"]["UserId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** 비밀번호 초기화 (USR-08). 임시 비밀번호를 한 번만 돌려준다. 탈퇴 회원은 불가 */
+        post: operations["resetUserPassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/users/{userId}/status-histories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: components["parameters"]["UserId"];
+            };
+            cookie?: never;
+        };
+        /** 상태 변경 이력 (USR-10). 최근순 */
+        get: operations["getUserStatusHistories"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1638,6 +1823,199 @@ export interface components {
             };
             error: components["schemas"]["NullError"];
         };
+        /**
+         * @description 개인정보 항목 (코드 그룹 PRIVACY_FIELD)
+         * @enum {string}
+         */
+        PrivacyField: "USER_NM" | "EMAIL" | "MOBILE_NO" | "BIRTH_DATE";
+        UserListItem: {
+            /** Format: int64 */
+            userId: number;
+            /** @enum {string} */
+            userTypeCd: "PERSONAL" | "CORPORATE";
+            userTypeNm: string | null;
+            loginId: string;
+            /** @description 화면 마스킹 설정을 따른다 */
+            userNm: string;
+            /** @description 화면 마스킹 설정을 따른다 */
+            email: string;
+            /** @description 숫자만, 마스킹하면 010-****-5678 */
+            mobileNo: string | null;
+            /** Format: int64 */
+            companyId: number | null;
+            companyNm: string | null;
+            /** @enum {string} */
+            statusCd: "ACTIVE" | "DORMANT" | "SUSPENDED" | "WITHDRAWN";
+            statusNm: string | null;
+            joinDt: components["schemas"]["DateTime"];
+        };
+        UserPageResponse: {
+            /** @enum {boolean} */
+            success: true;
+            data: {
+                items: components["schemas"]["UserListItem"][];
+                page: number;
+                size: number;
+                /** Format: int64 */
+                totalCount: number;
+                totalPages: number;
+            };
+            error: components["schemas"]["NullError"];
+        };
+        UserDetail: {
+            /** Format: int64 */
+            userId: number;
+            /** @enum {string} */
+            userTypeCd: "PERSONAL" | "CORPORATE";
+            userTypeNm: string | null;
+            loginId: string;
+            /** @description 화면 마스킹 설정을 따른다 */
+            userNm: string;
+            /** @description 화면 마스킹 설정을 따른다 */
+            email: string;
+            /** @description 숫자만, 마스킹하면 010-****-5678 */
+            mobileNo: string | null;
+            /** Format: int64 */
+            companyId: number | null;
+            companyNm: string | null;
+            /** @enum {string} */
+            statusCd: "ACTIVE" | "DORMANT" | "SUSPENDED" | "WITHDRAWN";
+            statusNm: string | null;
+            joinDt: components["schemas"]["DateTime"];
+            /** @description 원문 2026-10-04, 마스킹하면 1990-**-** */
+            birthDate: string | null;
+            deptNm: string | null;
+            positionNm: string | null;
+            /**
+             * @description USER_SERVICE 사용자 서비스 가입, ADMIN 관리자 등록
+             * @enum {string}
+             */
+            joinPath: "USER_SERVICE" | "ADMIN";
+            pwdTempYn: components["schemas"]["YnFlag"];
+            lastLoginDt: string | null;
+            withdrawDt: string | null;
+            /** @description 가려서 준 항목. 비어 있지 않고 PRIVACY 권한이 있으면 [원문 보기]를 쓸 수 있다 */
+            maskedFields: components["schemas"]["PrivacyField"][];
+            regNm: string | null;
+            regDt: components["schemas"]["DateTime"];
+            modNm: string | null;
+            modDt: components["schemas"]["DateTime"];
+        };
+        UserDetailResponse: {
+            /** @enum {boolean} */
+            success: true;
+            data: components["schemas"]["UserDetail"];
+            error: components["schemas"]["NullError"];
+        };
+        UserForm: {
+            /** Format: int64 */
+            userId: number;
+            /** @enum {string} */
+            userTypeCd: "PERSONAL" | "CORPORATE";
+            loginId: string;
+            userNm: string;
+            email: string;
+            mobileNo: string | null;
+            /** Format: date */
+            birthDate: string | null;
+            /** Format: int64 */
+            companyId: number | null;
+            companyNm: string | null;
+            deptNm: string | null;
+            positionNm: string | null;
+            modDt: components["schemas"]["DateTime"];
+        };
+        UserFormResponse: {
+            /** @enum {boolean} */
+            success: true;
+            data: components["schemas"]["UserForm"];
+            error: components["schemas"]["NullError"];
+        };
+        /** @description 등록은 userTypeCd·loginId 필수·modDt 없음, 수정은 modDt 필수·userTypeCd·loginId 무시 */
+        UserRequest: {
+            /** @enum {string|null} */
+            userTypeCd?: "PERSONAL" | "CORPORATE" | null;
+            loginId?: string | null;
+            userNm: string;
+            email: string;
+            mobileNo?: string | null;
+            /** Format: date */
+            birthDate?: string | null;
+            /** Format: int64 */
+            companyId?: number | null;
+            deptNm?: string | null;
+            positionNm?: string | null;
+            modDt?: string | null;
+        };
+        UserCreatedResponse: {
+            /** @enum {boolean} */
+            success: true;
+            data: {
+                /** Format: int64 */
+                userId: number;
+                /** @description 한 번만 보여 준다 (BR-02) */
+                tempPassword: string;
+            };
+            error: components["schemas"]["NullError"];
+        };
+        UserPrivacyRequest: {
+            /** @description PRIVACY_REASON 코드 (CS_INQUIRY, IDENTITY_CHECK, DATA_CORRECTION, ETC) */
+            reasonCd: string;
+            /** @description reasonCd가 ETC면 필수 */
+            reasonEtc?: string | null;
+        };
+        UserPrivacyResponse: {
+            /** @enum {boolean} */
+            success: true;
+            data: {
+                userNm: string;
+                email: string;
+                mobileNo: string | null;
+                /** Format: date */
+                birthDate: string | null;
+            };
+            error: components["schemas"]["NullError"];
+        };
+        UserStatusRequest: {
+            /**
+             * @description 정지 SUSPENDED, 정지·휴면 해제 ACTIVE, 강제 탈퇴 WITHDRAWN
+             * @enum {string}
+             */
+            statusCd: "ACTIVE" | "SUSPENDED" | "WITHDRAWN";
+            reason: string;
+            modDt: components["schemas"]["DateTime"];
+        };
+        UserDeleteRequest: {
+            reason: string;
+        };
+        UserStatusHistory: {
+            regDt: components["schemas"]["DateTime"];
+            beforeStatusCd: string;
+            beforeStatusNm: string | null;
+            afterStatusCd: string;
+            afterStatusNm: string | null;
+            reason: string;
+            /** @description 처리자 (배치면 비어 있다) */
+            regNm: string | null;
+        };
+        UserStatusHistoryResponse: {
+            /** @enum {boolean} */
+            success: true;
+            data: components["schemas"]["UserStatusHistory"][];
+            error: components["schemas"]["NullError"];
+        };
+        UserCompanyOption: {
+            /** Format: int64 */
+            companyId: number;
+            companyNm: string;
+            bizRegNo: string;
+        };
+        UserCompanyOptionsResponse: {
+            /** @enum {boolean} */
+            success: true;
+            data: components["schemas"]["UserCompanyOption"][];
+            error: components["schemas"]["NullError"];
+        };
     };
     responses: {
         /** @description 입력값 오류 (VALIDATION_ERROR, INVALID_REQUEST) */
@@ -1696,6 +2074,7 @@ export interface components {
         };
     };
     parameters: {
+        UserId: number;
         CompanyId: number;
         AdminId: number;
         RoleId: number;
@@ -3473,6 +3852,427 @@ export interface operations {
                 };
             };
             400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    listUsers: {
+        parameters: {
+            query?: {
+                /** @description 회원 구분 */
+                userTypeCd?: "PERSONAL" | "CORPORATE";
+                /** @description 로그인 아이디 (부분 일치) */
+                loginId?: string;
+                /** @description 이름 (부분 일치, 원문으로 검색) */
+                userNm?: string;
+                /** @description 이메일 (부분 일치, 원문으로 검색) */
+                email?: string;
+                /** @description 휴대폰 번호 (숫자, 부분 일치. 뒤 4자리 검색 가능) */
+                mobileNo?: string;
+                /** @description 소속 기업 (기업 상세의 [전체 보기]) */
+                companyId?: number;
+                /** @description 소속 기업명 (부분 일치) */
+                companyNm?: string;
+                /** @description 상태 */
+                statusCd?: "ACTIVE" | "DORMANT" | "SUSPENDED" | "WITHDRAWN";
+                /** @description 가입 경로 */
+                joinPath?: "USER_SERVICE" | "ADMIN";
+                /** @description 가입일 시작 (포함) */
+                joinDtFrom?: string;
+                /** @description 가입일 끝 (포함) */
+                joinDtTo?: string;
+                /** @description 페이지 번호 (1부터) */
+                page?: components["parameters"]["Page"];
+                /** @description 페이지 크기 */
+                size?: components["parameters"]["Size"];
+                /** @description loginId, userNm, joinDt 중 하나와 방향 (예: joinDt,desc) */
+                sort?: string[];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 회원 목록 (페이징) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserPageResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    createUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserRequest"];
+            };
+        };
+        responses: {
+            /** @description 등록 완료 */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserCreatedResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    downloadUserExcel: {
+        parameters: {
+            query?: {
+                /** @description 회원 구분 */
+                userTypeCd?: "PERSONAL" | "CORPORATE";
+                /** @description 로그인 아이디 (부분 일치) */
+                loginId?: string;
+                /** @description 이름 (부분 일치, 원문으로 검색) */
+                userNm?: string;
+                /** @description 이메일 (부분 일치, 원문으로 검색) */
+                email?: string;
+                /** @description 휴대폰 번호 (숫자, 부분 일치. 뒤 4자리 검색 가능) */
+                mobileNo?: string;
+                /** @description 소속 기업 (기업 상세의 [전체 보기]) */
+                companyId?: number;
+                /** @description 소속 기업명 (부분 일치) */
+                companyNm?: string;
+                /** @description 상태 */
+                statusCd?: "ACTIVE" | "DORMANT" | "SUSPENDED" | "WITHDRAWN";
+                /** @description 가입 경로 */
+                joinPath?: "USER_SERVICE" | "ADMIN";
+                /** @description 가입일 시작 (포함) */
+                joinDtFrom?: string;
+                /** @description 가입일 끝 (포함) */
+                joinDtTo?: string;
+                /** @description loginId, userNm, joinDt 중 하나와 방향 (예: joinDt,desc) */
+                sort?: string[];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description .xlsx 파일. 파일명은 Content-Disposition (사용자관리_yyyyMMddHHmm.xlsx) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": string;
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    checkUserLoginId: {
+        parameters: {
+            query: {
+                loginId: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 사용할 수 있으면 available=true */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AvailabilityResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    getUserCompanyOptions: {
+        parameters: {
+            query?: {
+                /** @description 기업명 또는 사업자등록번호 */
+                keyword?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 정상 기업 (기업명순) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserCompanyOptionsResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    getUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: components["parameters"]["UserId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 회원 상세 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserDetailResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    updateUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: components["parameters"]["UserId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserRequest"];
+            };
+        };
+        responses: {
+            /** @description 수정 완료 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmptyResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    deleteUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: components["parameters"]["UserId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserDeleteRequest"];
+            };
+        };
+        responses: {
+            /** @description 삭제 완료 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmptyResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    viewUserPrivacy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: components["parameters"]["UserId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserPrivacyRequest"];
+            };
+        };
+        responses: {
+            /** @description 개인정보 원문 (Cache-Control no-store) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserPrivacyResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    getUserForm: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: components["parameters"]["UserId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 수정 화면 값 (원문) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserFormResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    changeUserStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: components["parameters"]["UserId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserStatusRequest"];
+            };
+        };
+        responses: {
+            /** @description 변경 완료 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmptyResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    resetUserPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: components["parameters"]["UserId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 임시 비밀번호 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TempPasswordResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    getUserStatusHistories: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: components["parameters"]["UserId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 이력 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserStatusHistoryResponse"];
+                };
+            };
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];

@@ -31,10 +31,14 @@ public class MaskingService {
     /** 한 요청 안에서 쓰는 마스킹 판단 (설정을 한 번만 읽는다) */
     public record Masker(Map<String, PolicyRow> policies, boolean excel, boolean privacy) {
 
-        public String mask(Field field, String value) {
+        /** 이 항목을 가리는지 (설정이 없으면 가린다) */
+        public boolean on(Field field) {
             PolicyRow p = policies.get(field.name());
-            boolean on = p == null || (excel ? "Y".equals(p.excelMaskYn()) || !privacy : "Y".equals(p.screenMaskYn()));
-            return on ? Masking.apply(field, value) : value;
+            return p == null || (excel ? "Y".equals(p.excelMaskYn()) || !privacy : "Y".equals(p.screenMaskYn()));
+        }
+
+        public String mask(Field field, String value) {
+            return on(field) ? Masking.apply(field, value) : value;
         }
     }
 

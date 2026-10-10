@@ -22,4 +22,7 @@ public @interface RequirePermission {
     String[] menu();
 
     Action action();
+
+    /** 함께 있어야 하는 액션 (예: 회원 등록은 CREATE와 PRIVACY 모두, docs/04-features/02-user.md BR-05) */
+    Action[] also() default {};
 }
