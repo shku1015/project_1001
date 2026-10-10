@@ -117,6 +117,26 @@ class PermissionTest {
     }
 
     @Test
+    void 함께_필요한_액션이_하나라도_없으면_403() throws Exception {
+        // 회원 등록은 CREATE와 PRIVACY가 모두 필요하다 (02-user BR-05). CREATE만 가진 역할을 만든다
+        jdbc.update("INSERT INTO tb_role (role_cd, role_nm) VALUES ('IT_USER_CREATE_ONLY', '회원등록만') ON CONFLICT DO NOTHING");
+        jdbc.update("""
+                INSERT INTO tb_role_permission (role_id, perm_id)
+                SELECT r.role_id, p.perm_id FROM tb_role r, tb_permission p JOIN tb_menu m USING (menu_id)
+                WHERE r.role_cd = 'IT_USER_CREATE_ONLY' AND m.menu_cd = 'USER' AND p.action_cd IN ('READ', 'CREATE')
+                ON CONFLICT DO NOTHING
+                """);
+        String createOnly = AuthTestSupport.login(mockMvc,
+                AuthTestSupport.createAdmin(jdbc, encoder, "it_perm", "IT_USER_CREATE_ONLY", false)).bearer();
+        mockMvc.perform(get("/api/v1/_probe/user-create").header("Authorization", createOnly))
+                .andExpect(status().isForbidden());
+        // 회원운영자는 USER의 CREATE·PRIVACY를 모두 가진다
+        String member = AuthTestSupport.login(mockMvc, "t_member").bearer();
+        mockMvc.perform(get("/api/v1/_probe/user-create").header("Authorization", member))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     void 게시판별_메뉴_권한만_있으면_그_게시판만_통과한다() throws Exception {
         // 공지사항 관리(POST_NOTICE) 수정 권한만 가진 역할을 만들어 부여한다 (ADR-0010)
         jdbc.update("INSERT INTO tb_role (role_cd, role_nm) VALUES ('IT_NOTICE_ONLY', '공지만') ON CONFLICT DO NOTHING");

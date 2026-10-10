@@ -50,7 +50,8 @@
 
 ## 코드 작성 규칙
 
-- 컨트롤러(api, ssr 패키지)의 모든 메서드에 `@RequirePermission(menu, action)`, `@LoginOnly`, `@PublicEndpoint` 중 하나를 붙인다. 없으면 기본 거부(403)된다.
+- 컨트롤러(api, ssr 패키지)의 모든 메서드에 `@RequirePermission(menu, action)`, `@LoginOnly`, `@PublicEndpoint` 중 하나를 붙인다. 없으면 기본 거부(403)된다. 액션이 둘 다 필요하면 `also`를 쓴다 (예: 회원 등록 `action = CREATE, also = PRIVACY`).
+- ③ SSR 컨트롤러에서 화면(JSP)을 돌려주는 메서드는 `HttpServletResponse`를 인자로 받지 않는다. 받으면 Spring이 응답을 직접 처리한 것으로 보고 화면을 그리지 않는다 (엑셀처럼 파일을 직접 쓰는 메서드만 받는다).
 - 업무 규칙 위반은 Service에서 `BusinessException(ErrorCode)`를 던진다. 입력 칸 오류는 `BusinessException.field(...)`.
 - 감사로그는 Service에서 `AuditLogService.record(...)`를 같은 트랜잭션 안에서 직접 호출한다. 개인정보는 마스킹한 값, 비밀번호·토큰은 넣지 않는다.
 - 역할·권한·메뉴·관리자 상태를 바꾸면 `AdminAuthInfoService.evict/evictAll`로 권한 캐시를 비운다.

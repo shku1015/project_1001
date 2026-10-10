@@ -65,6 +65,28 @@ public class JspPageController {
         return "jsp/permission";
     }
 
+    @GetMapping("/jsp/users")
+    public String users() {
+        return "jsp/user-list";
+    }
+
+    @GetMapping("/jsp/users/new")
+    public String userNew() {
+        return "jsp/user-form";
+    }
+
+    @GetMapping("/jsp/users/{userId}")
+    public String user(@PathVariable long userId, Model model) {
+        model.addAttribute("userId", userId);
+        return "jsp/user-detail";
+    }
+
+    @GetMapping("/jsp/users/{userId}/edit")
+    public String userEdit(@PathVariable long userId, Model model) {
+        model.addAttribute("userId", userId);
+        return "jsp/user-form";
+    }
+
     @GetMapping("/jsp/companies")
     public String companies() {
         return "jsp/company-list";

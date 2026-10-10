@@ -65,7 +65,9 @@ public class PermissionInterceptor implements HandlerInterceptor {
 
         RequirePermission required = method.getMethodAnnotation(RequirePermission.class);
         if (required != null) {
-            if (!auth.hasAny(resolveMenus(required.menu(), request), required.action())) {
+            List<String> menus = resolveMenus(required.menu(), request);
+            if (!auth.hasAny(menus, required.action())
+                    || !Arrays.stream(required.also()).allMatch(also -> auth.hasAny(menus, also))) {
                 throw new BusinessException(ErrorCode.FORBIDDEN);
             }
             return true;

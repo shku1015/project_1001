@@ -30,6 +30,8 @@ tags:
     description: 관리자관리 (docs/06-api/06-admin.md)
   - name: company
     description: 기업정보관리 (docs/06-api/01-company.md)
+  - name: user
+    description: 사용자관리 (docs/06-api/02-user.md)
 
 paths:
   /auth/token:
@@ -1501,6 +1503,396 @@ paths:
         '409': { $ref: '#/components/responses/Conflict' }
         '500': { $ref: '#/components/responses/InternalError' }
 
+  /users:
+    get:
+      tags: [user]
+      operationId: listUsers
+      summary: 회원 목록 (USR-01). 삭제된 회원 제외, 기본 정렬 가입일시 역순. 개인정보는 화면 마스킹 설정을 따른다
+      parameters:
+        - name: userTypeCd
+          in: query
+          description: 회원 구분
+          schema: { type: string, enum: [PERSONAL, CORPORATE] }
+        - name: loginId
+          in: query
+          description: 로그인 아이디 (부분 일치)
+          schema: { type: string, maxLength: 100 }
+        - name: userNm
+          in: query
+          description: 이름 (부분 일치, 원문으로 검색)
+          schema: { type: string, maxLength: 100 }
+        - name: email
+          in: query
+          description: 이메일 (부분 일치, 원문으로 검색)
+          schema: { type: string, maxLength: 100 }
+        - name: mobileNo
+          in: query
+          description: 휴대폰 번호 (숫자, 부분 일치. 뒤 4자리 검색 가능)
+          schema: { type: string, pattern: '^[0-9]{1,11}$' }
+        - name: companyId
+          in: query
+          description: 소속 기업 (기업 상세의 [전체 보기])
+          schema: { type: integer, format: int64 }
+        - name: companyNm
+          in: query
+          description: 소속 기업명 (부분 일치)
+          schema: { type: string, maxLength: 100 }
+        - name: statusCd
+          in: query
+          description: 상태
+          schema: { type: string, enum: [ACTIVE, DORMANT, SUSPENDED, WITHDRAWN] }
+        - name: joinPath
+          in: query
+          description: 가입 경로
+          schema: { type: string, enum: [USER_SERVICE, ADMIN] }
+        - name: joinDtFrom
+          in: query
+          description: 가입일 시작 (포함)
+          schema: { type: string, format: date }
+        - name: joinDtTo
+          in: query
+          description: 가입일 끝 (포함)
+          schema: { type: string, format: date }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+        - name: sort
+          in: query
+          description: 'loginId, userNm, joinDt 중 하나와 방향 (예: joinDt,desc)'
+          schema:
+            type: array
+            items:
+              type: string
+              pattern: '^(loginId|userNm|joinDt),(asc|desc)$'
+          explode: true
+      responses:
+        '200':
+          description: 회원 목록 (페이징)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPageResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '500': { $ref: '#/components/responses/InternalError' }
+    post:
+      tags: [user]
+      operationId: createUser
+      summary: 회원 등록 (USR-04). CREATE와 PRIVACY 권한이 모두 필요. 임시 비밀번호를 한 번만 돌려준다
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+      responses:
+        '201':
+          description: 등록 완료
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserCreatedResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /users/excel:
+    get:
+      tags: [user]
+      operationId: downloadUserExcel
+      summary: 엑셀 다운로드 (USR-11). 엑셀 마스킹 설정을 따르고, 마스킹 N 항목은 PRIVACY 권한이 있을 때만 원문
+      parameters:
+        - name: userTypeCd
+          in: query
+          description: 회원 구분
+          schema: { type: string, enum: [PERSONAL, CORPORATE] }
+        - name: loginId
+          in: query
+          description: 로그인 아이디 (부분 일치)
+          schema: { type: string, maxLength: 100 }
+        - name: userNm
+          in: query
+          description: 이름 (부분 일치, 원문으로 검색)
+          schema: { type: string, maxLength: 100 }
+        - name: email
+          in: query
+          description: 이메일 (부분 일치, 원문으로 검색)
+          schema: { type: string, maxLength: 100 }
+        - name: mobileNo
+          in: query
+          description: 휴대폰 번호 (숫자, 부분 일치. 뒤 4자리 검색 가능)
+          schema: { type: string, pattern: '^[0-9]{1,11}$' }
+        - name: companyId
+          in: query
+          description: 소속 기업 (기업 상세의 [전체 보기])
+          schema: { type: integer, format: int64 }
+        - name: companyNm
+          in: query
+          description: 소속 기업명 (부분 일치)
+          schema: { type: string, maxLength: 100 }
+        - name: statusCd
+          in: query
+          description: 상태
+          schema: { type: string, enum: [ACTIVE, DORMANT, SUSPENDED, WITHDRAWN] }
+        - name: joinPath
+          in: query
+          description: 가입 경로
+          schema: { type: string, enum: [USER_SERVICE, ADMIN] }
+        - name: joinDtFrom
+          in: query
+          description: 가입일 시작 (포함)
+          schema: { type: string, format: date }
+        - name: joinDtTo
+          in: query
+          description: 가입일 끝 (포함)
+          schema: { type: string, format: date }
+        - name: sort
+          in: query
+          description: 'loginId, userNm, joinDt 중 하나와 방향 (예: joinDt,desc)'
+          schema:
+            type: array
+            items:
+              type: string
+              pattern: '^(loginId|userNm|joinDt),(asc|desc)$'
+          explode: true
+      responses:
+        '200':
+          description: '.xlsx 파일. 파일명은 Content-Disposition (사용자관리_yyyyMMddHHmm.xlsx)'
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema: { type: string, format: binary }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /users/check-login-id:
+    get:
+      tags: [user]
+      operationId: checkUserLoginId
+      summary: 로그인 아이디 중복 확인 (삭제된 회원의 아이디도 쓸 수 없다)
+      parameters:
+        - name: loginId
+          in: query
+          required: true
+          schema: { type: string, maxLength: 50 }
+      responses:
+        '200':
+          description: 사용할 수 있으면 available=true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AvailabilityResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /users/company-options:
+    get:
+      tags: [user]
+      operationId: getUserCompanyOptions
+      summary: 소속 기업 선택 목록. 정상 기업만, 기업명·사업자등록번호로 찾는다 (최대 100건, 기업명순)
+      parameters:
+        - name: keyword
+          in: query
+          description: 기업명 또는 사업자등록번호
+          schema: { type: string, maxLength: 100 }
+      responses:
+        '200':
+          description: 정상 기업 (기업명순)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserCompanyOptionsResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /users/{userId}:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    get:
+      tags: [user]
+      operationId: getUser
+      summary: 회원 상세 (USR-02). 개인정보는 화면 마스킹 설정을 따르고, 가린 항목은 maskedFields로 알려 준다
+      responses:
+        '200':
+          description: 회원 상세
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDetailResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+    put:
+      tags: [user]
+      operationId: updateUser
+      summary: 회원 정보·소속 기업 수정 (USR-05, 06). UPDATE와 PRIVACY 권한이 모두 필요. 회원 구분·아이디는 무시
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+      responses:
+        '200':
+          description: 수정 완료
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmptyResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+    delete:
+      tags: [user]
+      operationId: deleteUser
+      summary: 회원 삭제 (USR-09). 삭제 표시, 사유 필수. 어느 상태에서든 할 수 있다
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserDeleteRequest'
+      responses:
+        '200':
+          description: 삭제 완료
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmptyResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /users/{userId}/privacy:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    post:
+      tags: [user]
+      operationId: viewUserPrivacy
+      summary: 개인정보 원문 보기 (USR-03). 사유 코드(PRIVACY_REASON), 기타면 직접 입력. 부를 때마다 감사로그
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserPrivacyRequest'
+      responses:
+        '200':
+          description: 개인정보 원문 (Cache-Control no-store)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPrivacyResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /users/{userId}/form:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    get:
+      tags: [user]
+      operationId: getUserForm
+      summary: 수정 화면용 원문 조회. UPDATE와 PRIVACY 권한이 모두 필요. 감사로그(사유 DATA_CORRECTION). 탈퇴 회원은 USER_WITHDRAWN
+      responses:
+        '200':
+          description: 수정 화면 값 (원문)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserFormResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /users/{userId}/status:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    patch:
+      tags: [user]
+      operationId: changeUserStatus
+      summary: 상태 변경 (USR-07). 정지·정지 해제·휴면 해제·강제 탈퇴, 사유 필수. 이력을 남긴다
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserStatusRequest'
+      responses:
+        '200':
+          description: 변경 완료
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmptyResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /users/{userId}/password-reset:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    post:
+      tags: [user]
+      operationId: resetUserPassword
+      summary: 비밀번호 초기화 (USR-08). 임시 비밀번호를 한 번만 돌려준다. 탈퇴 회원은 불가
+      responses:
+        '200':
+          description: 임시 비밀번호
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TempPasswordResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /users/{userId}/status-histories:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    get:
+      tags: [user]
+      operationId: getUserStatusHistories
+      summary: 상태 변경 이력 (USR-10). 최근순
+      responses:
+        '200':
+          description: 이력
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserStatusHistoryResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
 components:
   securitySchemes:
     bearerAuth:
@@ -1510,6 +1902,13 @@ components:
       description: Access Token (docs/04-features/09-auth.md 1.1)
 
   parameters:
+    UserId:
+      name: userId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
     CompanyId:
       name: companyId
       in: path
@@ -2979,4 +3378,221 @@ components:
               type: array
               items: { $ref: '#/components/schemas/CompanyUser' }
             totalCount: { type: integer, format: int64, minimum: 0 }
+        error: { $ref: '#/components/schemas/NullError' }
+
+    # ---------------------------------------------------------------
+    # 사용자관리 (docs/06-api/02-user.md)
+    # ---------------------------------------------------------------
+    PrivacyField:
+      type: string
+      description: 개인정보 항목 (코드 그룹 PRIVACY_FIELD)
+      enum: [USER_NM, EMAIL, MOBILE_NO, BIRTH_DATE]
+
+    UserListItem:
+      type: object
+      required: [userId, userTypeCd, userTypeNm, loginId, userNm, email, mobileNo, companyId, companyNm, statusCd, statusNm, joinDt]
+      properties:
+        userId: { type: integer, format: int64 }
+        userTypeCd: { type: string, enum: [PERSONAL, CORPORATE] }
+        userTypeNm: { type: string, nullable: true }
+        loginId: { type: string }
+        userNm: { type: string, description: 화면 마스킹 설정을 따른다 }
+        email: { type: string, description: 화면 마스킹 설정을 따른다 }
+        mobileNo: { type: string, nullable: true, description: '숫자만, 마스킹하면 010-****-5678' }
+        companyId: { type: integer, format: int64, nullable: true }
+        companyNm: { type: string, nullable: true }
+        statusCd: { type: string, enum: [ACTIVE, DORMANT, SUSPENDED, WITHDRAWN] }
+        statusNm: { type: string, nullable: true }
+        joinDt: { $ref: '#/components/schemas/DateTime' }
+
+    UserPageResponse:
+      type: object
+      required: [success, data, error]
+      properties:
+        success: { type: boolean, enum: [true] }
+        data:
+          type: object
+          required: [items, page, size, totalCount, totalPages]
+          properties:
+            items:
+              type: array
+              items: { $ref: '#/components/schemas/UserListItem' }
+            page: { type: integer, minimum: 1 }
+            size: { type: integer }
+            totalCount: { type: integer, format: int64, minimum: 0 }
+            totalPages: { type: integer, minimum: 0 }
+        error: { $ref: '#/components/schemas/NullError' }
+
+    UserDetail:
+      type: object
+      required: [userId, userTypeCd, userTypeNm, loginId, userNm, email, mobileNo, companyId, companyNm, statusCd, statusNm, joinDt, birthDate, deptNm, positionNm, joinPath, pwdTempYn, lastLoginDt, withdrawDt, maskedFields, regNm, regDt, modNm, modDt]
+      properties:
+        userId: { type: integer, format: int64 }
+        userTypeCd: { type: string, enum: [PERSONAL, CORPORATE] }
+        userTypeNm: { type: string, nullable: true }
+        loginId: { type: string }
+        userNm: { type: string, description: 화면 마스킹 설정을 따른다 }
+        email: { type: string, description: 화면 마스킹 설정을 따른다 }
+        mobileNo: { type: string, nullable: true, description: '숫자만, 마스킹하면 010-****-5678' }
+        companyId: { type: integer, format: int64, nullable: true }
+        companyNm: { type: string, nullable: true }
+        statusCd: { type: string, enum: [ACTIVE, DORMANT, SUSPENDED, WITHDRAWN] }
+        statusNm: { type: string, nullable: true }
+        joinDt: { $ref: '#/components/schemas/DateTime' }
+        birthDate: { type: string, nullable: true, description: '원문 2026-10-04, 마스킹하면 1990-**-**' }
+        deptNm: { type: string, nullable: true }
+        positionNm: { type: string, nullable: true }
+        joinPath: { type: string, enum: [USER_SERVICE, ADMIN], description: 'USER_SERVICE 사용자 서비스 가입, ADMIN 관리자 등록' }
+        pwdTempYn: { $ref: '#/components/schemas/YnFlag' }
+        lastLoginDt: { type: string, nullable: true, pattern: '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$' }
+        withdrawDt: { type: string, nullable: true, pattern: '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$' }
+        maskedFields:
+          type: array
+          description: 가려서 준 항목. 비어 있지 않고 PRIVACY 권한이 있으면 [원문 보기]를 쓸 수 있다
+          items: { $ref: '#/components/schemas/PrivacyField' }
+        regNm: { type: string, nullable: true }
+        regDt: { $ref: '#/components/schemas/DateTime' }
+        modNm: { type: string, nullable: true }
+        modDt: { $ref: '#/components/schemas/DateTime' }
+
+    UserDetailResponse:
+      type: object
+      required: [success, data, error]
+      properties:
+        success: { type: boolean, enum: [true] }
+        data: { $ref: '#/components/schemas/UserDetail' }
+        error: { $ref: '#/components/schemas/NullError' }
+
+    UserForm:
+      type: object
+      required: [userId, userTypeCd, loginId, userNm, email, mobileNo, birthDate, companyId, companyNm, deptNm, positionNm, modDt]
+      properties:
+        userId: { type: integer, format: int64 }
+        userTypeCd: { type: string, enum: [PERSONAL, CORPORATE] }
+        loginId: { type: string }
+        userNm: { type: string }
+        email: { type: string }
+        mobileNo: { type: string, nullable: true }
+        birthDate: { type: string, format: date, nullable: true }
+        companyId: { type: integer, format: int64, nullable: true }
+        companyNm: { type: string, nullable: true }
+        deptNm: { type: string, nullable: true }
+        positionNm: { type: string, nullable: true }
+        modDt: { $ref: '#/components/schemas/DateTime' }
+
+    UserFormResponse:
+      type: object
+      required: [success, data, error]
+      properties:
+        success: { type: boolean, enum: [true] }
+        data: { $ref: '#/components/schemas/UserForm' }
+        error: { $ref: '#/components/schemas/NullError' }
+
+    UserRequest:
+      type: object
+      required: [userNm, email]
+      additionalProperties: false
+      description: 등록은 userTypeCd·loginId 필수·modDt 없음, 수정은 modDt 필수·userTypeCd·loginId 무시
+      properties:
+        userTypeCd: { type: string, nullable: true, enum: [PERSONAL, CORPORATE, null] }
+        loginId: { type: string, nullable: true, pattern: '^[a-z0-9]{4,50}$' }
+        userNm: { type: string, minLength: 1, maxLength: 50 }
+        email: { type: string, maxLength: 100 }
+        mobileNo: { type: string, nullable: true, pattern: '^[0-9]{10,11}$' }
+        birthDate: { type: string, format: date, nullable: true }
+        companyId: { type: integer, format: int64, nullable: true }
+        deptNm: { type: string, nullable: true, maxLength: 100 }
+        positionNm: { type: string, nullable: true, maxLength: 50 }
+        modDt: { type: string, nullable: true, pattern: '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$' }
+
+    UserCreatedResponse:
+      type: object
+      required: [success, data, error]
+      properties:
+        success: { type: boolean, enum: [true] }
+        data:
+          type: object
+          required: [userId, tempPassword]
+          properties:
+            userId: { type: integer, format: int64 }
+            tempPassword: { type: string, description: 한 번만 보여 준다 (BR-02) }
+        error: { $ref: '#/components/schemas/NullError' }
+
+    UserPrivacyRequest:
+      type: object
+      required: [reasonCd]
+      additionalProperties: false
+      properties:
+        reasonCd: { type: string, description: 'PRIVACY_REASON 코드 (CS_INQUIRY, IDENTITY_CHECK, DATA_CORRECTION, ETC)', maxLength: 50 }
+        reasonEtc: { type: string, nullable: true, maxLength: 200, description: reasonCd가 ETC면 필수 }
+
+    UserPrivacyResponse:
+      type: object
+      required: [success, data, error]
+      properties:
+        success: { type: boolean, enum: [true] }
+        data:
+          type: object
+          required: [userNm, email, mobileNo, birthDate]
+          properties:
+            userNm: { type: string }
+            email: { type: string }
+            mobileNo: { type: string, nullable: true }
+            birthDate: { type: string, format: date, nullable: true }
+        error: { $ref: '#/components/schemas/NullError' }
+
+    UserStatusRequest:
+      type: object
+      required: [statusCd, reason, modDt]
+      additionalProperties: false
+      properties:
+        statusCd: { type: string, enum: [ACTIVE, SUSPENDED, WITHDRAWN], description: '정지 SUSPENDED, 정지·휴면 해제 ACTIVE, 강제 탈퇴 WITHDRAWN' }
+        reason: { type: string, minLength: 1, maxLength: 500 }
+        modDt: { $ref: '#/components/schemas/DateTime' }
+
+    UserDeleteRequest:
+      type: object
+      required: [reason]
+      additionalProperties: false
+      properties:
+        reason: { type: string, minLength: 1, maxLength: 500 }
+
+    UserStatusHistory:
+      type: object
+      required: [regDt, beforeStatusCd, beforeStatusNm, afterStatusCd, afterStatusNm, reason, regNm]
+      properties:
+        regDt: { $ref: '#/components/schemas/DateTime' }
+        beforeStatusCd: { type: string }
+        beforeStatusNm: { type: string, nullable: true }
+        afterStatusCd: { type: string }
+        afterStatusNm: { type: string, nullable: true }
+        reason: { type: string }
+        regNm: { type: string, nullable: true, description: 처리자 (배치면 비어 있다) }
+
+    UserStatusHistoryResponse:
+      type: object
+      required: [success, data, error]
+      properties:
+        success: { type: boolean, enum: [true] }
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/UserStatusHistory' }
+        error: { $ref: '#/components/schemas/NullError' }
+
+    UserCompanyOption:
+      type: object
+      required: [companyId, companyNm, bizRegNo]
+      properties:
+        companyId: { type: integer, format: int64 }
+        companyNm: { type: string }
+        bizRegNo: { type: string }
+
+    UserCompanyOptionsResponse:
+      type: object
+      required: [success, data, error]
+      properties:
+        success: { type: boolean, enum: [true] }
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/UserCompanyOption' }
         error: { $ref: '#/components/schemas/NullError' }
