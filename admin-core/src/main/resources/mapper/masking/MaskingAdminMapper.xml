@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.admin.masking.MaskingAdminMapper">
+
+    <select id="selectPolicies" resultType="egovframework.admin.masking.MaskingAdminMapper$PolicyRow">
+        SELECT p.field_cd, c.code_nm AS field_nm, p.screen_mask_yn, p.excel_mask_yn, a.admin_nm AS mod_nm, p.mod_dt
+        FROM tb_masking_policy p
+        LEFT JOIN tb_code c ON c.group_cd = 'PRIVACY_FIELD' AND c.code = p.field_cd
+        LEFT JOIN tb_admin a ON a.admin_id = p.mod_id
+        ORDER BY c.sort_ord, p.field_cd
+    </select>
+
+    <update id="updatePolicy">
+        UPDATE tb_masking_policy
+        SET screen_mask_yn = #{screenMaskYn}, excel_mask_yn = #{excelMaskYn}, mod_id = #{modId}, mod_dt = now()
+        WHERE field_cd = #{fieldCd}
+          AND date_trunc('second', mod_dt) = date_trunc('second', #{modDt}::timestamp)
+    </update>
+</mapper>

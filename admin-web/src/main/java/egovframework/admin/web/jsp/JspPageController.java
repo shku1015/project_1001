@@ -65,6 +65,11 @@ public class JspPageController {
         return "jsp/permission";
     }
 
+    @GetMapping("/jsp/masking")
+    public String masking() {
+        return "jsp/masking";
+    }
+
     @GetMapping("/jsp/users")
     public String users() {
         return "jsp/user-list";

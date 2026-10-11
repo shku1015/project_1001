@@ -42,6 +42,8 @@ export default async function globalSetup() {
     // E2E가 만든 코드관리 데이터 정리 (반복 실행 안전)
     await client.query("DELETE FROM tb_code WHERE group_cd LIKE 'E2E\\_%'")
     await client.query("DELETE FROM tb_code_group WHERE group_cd LIKE 'E2E\\_%'")
+    // 마스킹 설정은 모두 켬 (다른 시나리오가 가린 값을 기대한다)
+    await client.query("UPDATE tb_masking_policy SET screen_mask_yn = 'Y', excel_mask_yn = 'Y'")
     // E2E가 화면에서 등록한 회원 정리 (상태 이력 → 회원)
     await client.query("DELETE FROM tb_user_status_hist WHERE user_id IN (SELECT user_id FROM tb_user WHERE login_id LIKE 'e2eusr%')")
     await client.query("DELETE FROM tb_user WHERE login_id LIKE 'e2eusr%'")

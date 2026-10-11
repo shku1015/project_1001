@@ -42,6 +42,8 @@ test('목록을 검색·정렬하고 페이지 크기를 바꾼다', async ({ pa
   const asc = await page.locator('#admin-table tbody tr td:nth-child(2)').allTextContents()
   await page.locator('#admin-table .sort-link[data-sort="loginId"]').click()
   await expect(page.locator('#admin-table th[aria-sort="descending"]')).toContainText('로그인 아이디')
+  // ①은 머리글이 먼저 바뀌고 목록은 응답 뒤에 바뀐다. 첫 행이 바뀔 때까지 기다린다
+  await expect(page.locator('#admin-table tbody tr td:nth-child(2)').first()).toHaveText(asc[asc.length - 1])
   const desc = await page.locator('#admin-table tbody tr td:nth-child(2)').allTextContents()
   expect(asc.length).toBeLessThan(20)    // 한 페이지에 모두 들어오는 경우에만 역순 비교가 맞다
   expect(desc).toEqual([...asc].reverse())

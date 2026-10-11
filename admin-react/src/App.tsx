@@ -10,6 +10,7 @@ import { CompanyListPage } from './pages/CompanyListPage'
 import { HomePage } from './pages/HomePage'
 import { LoginPage } from './pages/LoginPage'
 import { CodePage } from './pages/CodePage'
+import { MaskingPage } from './pages/MaskingPage'
 import { MePage } from './pages/MePage'
 import { MenuPage } from './pages/MenuPage'
 import { NotFoundPage } from './pages/NotFoundPage'
@@ -30,6 +31,7 @@ export function App() {
       <Route path="/" element={<RequireAuth><HomePage /></RequireAuth>} />
       <Route path="/me" element={<RequireAuth><MePage /></RequireAuth>} />
       <Route path="/menus" element={<RequireAuth><MenuPage /></RequireAuth>} />
+      <Route path="/masking" element={<RequireAuth><MaskingPage /></RequireAuth>} />
       <Route path="/users" element={<RequireAuth><UserListPage /></RequireAuth>} />
       <Route path="/users/new" element={<RequireAuth><UserFormPage /></RequireAuth>} />
       <Route path="/users/:userId" element={<RequireAuth><UserDetailPage /></RequireAuth>} />
